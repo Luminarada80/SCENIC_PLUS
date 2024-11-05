@@ -11,8 +11,8 @@ source /gpfs/Home/esm5360/.bashrc
 conda activate scenicplus
 cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS
 
-echo Running step00_RNA_preprocessing.py
-python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step00_RNA_preprocessing.py
+# echo Running step00_RNA_preprocessing.py
+# python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step00_RNA_preprocessing.py
 
 echo Running step01_preprocessing_pseudobulk_profiles.py
-python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step02_preprocessing_pseudobulk_profiles.py
+python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step01_ATAC_preprocessing_pseudobulk_profiles.py

@@ -1,14 +1,16 @@
 import scanpy as sc 
 import pandas as pd
 
+import shared_variables
+
 adata = sc.read_10x_mtx(
-    "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/filtered_feature_bc_matrix/",
+    shared_variables.rna_data_dir,
     var_names = "gene_symbols"
 )
 
 adata.var_names_make_unique()
 
-cell_data = pd.read_csv("/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/GSE205117_cell_metadata_filtered.tsv", index_col=0)
+cell_data = pd.read_csv(shared_variables.cell_data, index_col=0)
 
 cell_data.index = [cb.rsplit("-", 1)[0] for cb in cell_data.index]
 

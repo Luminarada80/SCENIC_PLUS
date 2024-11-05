@@ -2,13 +2,15 @@ import pycisTopic
 import os
 import pandas as pd
 
-cell_data = pd.read_table("/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/GSE205117_cell_metadata_filtered.tsv", header=[0])
+import shared_variables
+
+cell_data = pd.read_table(shared_variables.cell_data, header=[0])
 print(cell_data.head())
 
-out_dir = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/"
+out_dir = shared_variables.out_dir
 
 fragments_dict = {
-    "E7.5_rep1": "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/GSM6205427_E7.5_rep1_ATAC_fragments.tsv.gz"
+    "E7.5_rep1": shared_variables.fragments_dict
 }
 
 chromsizes = pd.read_table(
