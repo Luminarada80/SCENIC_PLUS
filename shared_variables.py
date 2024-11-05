@@ -1,0 +1,12 @@
+data_dir: str = '/gpfs/Labs/Uzun/DATA/PROJECTS/2024.SC_MO_TRN_BENCHMARKING.MIRA/SCENIC_PLUS.HABIBA/data'
+results_dir: str = '/gpfs/Labs/Uzun/RESULTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS'
+
+cell_data: str = f'{data_dir}/GSE205117_cell_metadata_filtered.tsv'
+
+fragments_dict: str = f'{data_dir}/GSM6205427_E7.5_rep1_ATAC_fragments.tsv.gz'
+
+rna_data_dir: str = f'{data_dir}/filtered_feature_bc_matrix/'
+
+out_dir: str = f'{results_dir}/scenicplus/mESC_new_scenicplus/outs/'
+
+

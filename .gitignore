@@ -1,0 +1,9 @@
+*.err
+*.log
+scenicplus/
+pycisTopic/
+*.csv
+*.txt
+*.tsv
+*.h5ad
+*.mtx
