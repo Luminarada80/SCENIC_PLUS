@@ -7,11 +7,13 @@
 #SBATCH -o scenic_plus.log
 #SBATCH -e scenic_plus.err
 
-source /gpfs/Home/esm5360/.bashrc
 conda activate scenicplus
 cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS
 
 echo $(which python)
+
+# Add the local pycisTopic to the python path so it's recognized as a module
+export PYTHONPATH=$PYTHONPATH:/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/pycisTopic/src
 
 # echo Running step00_RNA_preprocessing.py
 # python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step00_RNA_preprocessing.py
