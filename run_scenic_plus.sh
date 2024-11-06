@@ -16,3 +16,9 @@ cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS
 
 echo Running step01_preprocessing_pseudobulk_profiles.py
 python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step01_ATAC_preprocessing_pseudobulk_profiles.py
+
+echo Running step02_ATAC_inferring_consensus_peaks.py
+python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step03_ATAC_inferring_consensus_peaks.py
+
+echo Running step03_ATAC_qc.py
+python3 /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/step03_ATAC_qc.py

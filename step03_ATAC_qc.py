@@ -1,8 +1,10 @@
 import pycisTopic
 import os
 
+import shared_variables
+
 fragments_dict = {
-    "mESC": "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/GSM6205427_E7.5_rep1_ATAC_fragments.tsv.gz"
+    "mESC": shared_variables.fragments_dict
 }
 
 from pycisTopic.plotting.qc_plot import plot_sample_stats, plot_barcode_stats

@@ -14,7 +14,7 @@ fragments_dict = {
 }
 
 chromsizes = pd.read_table(
-    "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes",
+    shared_variables.mm10_chrom_size_link,
     header = None,
     names = ["Chromosome", "End"]
 )
@@ -36,7 +36,7 @@ bw_paths, bed_paths = export_pseudobulk(
     path_to_fragments = fragments_dict,
     n_cpu = 10,
     normalize_bigwig = True,
-    temp_dir = "/tmp",
+    temp_dir = shared_variables.temp_dir,
     split_pattern = "-"
 )
 
