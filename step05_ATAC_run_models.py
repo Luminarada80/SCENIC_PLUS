@@ -2,10 +2,12 @@ import pycisTopic
 import os
 import pickle
 
-out_dir = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/"
+import shared_variables
+
+out_dir = shared_variables.out_dir
 
 # Path to your .pkl file
-file_path = '/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/cistopic_obj.pkl'
+file_path = f'{out_dir}/cistopic_obj.pkl'
 
 # Load the pickle file
 with open(file_path, 'rb') as file:
@@ -26,8 +28,8 @@ models=run_cgs_models_mallet(
     alpha_by_topic=True,
     eta=0.1,
     eta_by_topic=False,
-    tmp_path="/gpfs/Home/haa5704/scenicplus/tmp_mESC/",
-    save_path="/gpfs/Home/haa5704/scenicplus/tmp_mESC/",
+    tmp_path=shared_variables.temp_dir,
+    save_path=shared_variables.temp_dir,
     mallet_path=mallet_path,
 )
 

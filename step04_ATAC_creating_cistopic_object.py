@@ -1,17 +1,19 @@
 import pycisTopic
 import os
 
-out_dir = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/"
+import shared_variables
+
+out_dir = shared_variables.out_dir
 
 path_to_regions = os.path.join(out_dir, "consensus_peak_calling/consensus_regions.bed")
-path_to_blacklist = "/gpfs/Home/haa5704/pycisTopic/blacklist/hg38-blacklist.v2.bed"
-pycistopic_qc_output_dir = "outs/qc"
+path_to_blacklist = shared_variables.path_to_mm10_blacklist
+pycistopic_qc_output_dir = shared_variables.pycistopic_qc_output_dir
 
 from pycisTopic.cistopic_class import create_cistopic_object_from_fragments
 import polars as pl
 
 fragments_dict = {
-    "mESC": "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/GSM6205427_E7.5_rep1_ATAC_fragments.tsv.gz"
+    "mESC": shared_variables.fragments_dict
 }
 
 from pycisTopic.qc import get_barcodes_passing_qc_for_sample
@@ -23,7 +25,7 @@ for sample_id in fragments_dict:
         sample_id_to_thresholds[sample_id]
     ) = get_barcodes_passing_qc_for_sample(
             sample_id = sample_id,
-            pycistopic_qc_output_dir = "outs/qc",
+            pycistopic_qc_output_dir = shared_variables.pycistopic_qc_output_dir,
             unique_fragments_threshold = None, # use automatic thresholding
             tss_enrichment_threshold = None, # use automatic thresholding
             frip_threshold = 0,
@@ -58,7 +60,7 @@ pickle.dump(
 
 import pandas as pd
 
-cell_data = pd.read_table("/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/data/GSE205117_cell_metadata_filtered.tsv", header=[0])
+cell_data = pd.read_table(shared_variables.cell_data, header=[0])
 
 cistopic_obj.add_cell_data(cell_data, split_pattern='-')
 pickle.dump(

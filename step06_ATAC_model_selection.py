@@ -2,10 +2,12 @@ import pycisTopic
 import os
 import pickle
 
-out_dir = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/"
+import shared_variables
 
-models_filename = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/models.pkl"
-cistopic_obj_filename = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/cistopic_obj.pkl"
+out_dir = shared_variables.out_dir
+
+models_filename = f"{out_dir}/models.pkl"
+cistopic_obj_filename = f"{out_dir}/cistopic_obj.pkl"
 
 with open(models_filename, 'rb') as file:
     models = pickle.load(file)

@@ -3,9 +3,11 @@ import os
 import pickle
 import matplotlib.pyplot as plt 
 
-out_dir = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/"
+import shared_variables
 
-cistopic_obj_filename = "/gpfs/Home/haa5704/scenicplus/mESC_new_scenicplus/outs/cistopic_obj.pkl"
+out_dir = shared_variables.out_dir
+
+cistopic_obj_filename = f"{out_dir}/cistopic_obj.pkl"
 
 with open(cistopic_obj_filename, 'rb') as file:
     cistopic_obj = pickle.load(file)
@@ -122,15 +124,15 @@ for topic in region_bin_topics_top_3k:
         header = False, index = False
     )
 
-for cell_type in markers_dict:
-    region_names_to_coordinates(
-        markers_dict[cell_type].index
-    ).sort_values(
-        ["Chromosome", "Start", "End"]
-    ).to_csv(
-        os.path.join(out_dir, "region_sets", "DARs_cell_type", f"{cell_type}.bed"),
-        sep = "\t",
-        header = False, index = False
-    )
+# for cell_type in markers_dict:
+#     region_names_to_coordinates(
+#         markers_dict[cell_type].index
+#     ).sort_values(
+#         ["Chromosome", "Start", "End"]
+#     ).to_csv(
+#         os.path.join(out_dir, "region_sets", "DARs_cell_type", f"{cell_type}.bed"),
+#         sep = "\t",
+#         header = False, index = False
+#     )
 
 

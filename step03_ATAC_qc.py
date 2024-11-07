@@ -10,10 +10,13 @@ fragments_dict = {
 from pycisTopic.plotting.qc_plot import plot_sample_stats, plot_barcode_stats
 import matplotlib.pyplot as plt
 
+if not os.path.exists(shared_variables.pycistopic_qc_output_dir):
+    os.makedirs(shared_variables.pycistopic_qc_output_dir)
+
 for sample_id in fragments_dict:
     fig = plot_sample_stats(
         sample_id = sample_id,
-        pycistopic_qc_output_dir = "outs/qc"
+        pycistopic_qc_output_dir = shared_variables.pycistopic_qc_output_dir
     )
 
 from pycisTopic.qc import get_barcodes_passing_qc_for_sample
@@ -25,7 +28,7 @@ for sample_id in fragments_dict:
         sample_id_to_thresholds[sample_id]
     ) = get_barcodes_passing_qc_for_sample(
             sample_id = sample_id,
-            pycistopic_qc_output_dir = "outs/qc",
+            pycistopic_qc_output_dir = shared_variables.pycistopic_qc_output_dir,
             unique_fragments_threshold = None, # use automatic thresholding
             tss_enrichment_threshold = None, # use automatic thresholding
             frip_threshold = 0,
@@ -35,7 +38,7 @@ for sample_id in fragments_dict:
 for sample_id in fragments_dict:
     fig = plot_barcode_stats(
         sample_id = sample_id,
-        pycistopic_qc_output_dir = "outs/qc",
+        pycistopic_qc_output_dir = shared_variables.pycistopic_qc_output_dir,
         bc_passing_filters = sample_id_to_barcodes_passing_filters[sample_id],
         detailed_title = False,
         **sample_id_to_thresholds[sample_id]

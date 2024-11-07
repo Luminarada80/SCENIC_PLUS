@@ -14,3 +14,5 @@ temp_dir: str = f'{results_dir}/scenicplus/tmp_mESC/'
 mm10_chrom_size_link: str = 'https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes'
 
 path_to_mm10_blacklist: str = '/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/pycisTopic/blacklist/mm10-blacklist.v2.bed'
+
+pycistopic_qc_output_dir: str = f'{results_dir}/outs/qc'
