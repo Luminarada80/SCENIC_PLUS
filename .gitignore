@@ -7,3 +7,5 @@ pycisTopic/
 *.tsv
 *.h5ad
 *.mtx
+__pycache__/
+tmp/

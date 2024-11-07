@@ -9,7 +9,7 @@ rna_data_dir: str = f'{data_dir}/filtered_feature_bc_matrix/'
 
 out_dir: str = f'{results_dir}/scenicplus/mESC_new_scenicplus/outs/'
 
-temp_dir: str = f'{results_dir}/scenicplus/tmp_mESC/'
+temp_dir: str = f'/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/tmp'
 
 mm10_chrom_size_link: str = 'https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes'
 
