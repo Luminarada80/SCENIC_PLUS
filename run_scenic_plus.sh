@@ -33,7 +33,7 @@ run_step "step00_RNA_preprocessing.py" "${SCRIPT_DIR}/step00_RNA_preprocessing.p
 
 run_step "step01_preprocessing_pseudobulk_profiles.py" "${SCRIPT_DIR}/step01_ATAC_preprocessing_pseudobulk_profiles.py"
 
-run_step "step02_ATAC_inferring_consensus_peaks.py" "${SCRIPT_DIR}/step02_ATAC_inferring_consensus_peaks.py"
+run_step "step02_ATAC_infering_consensus_peaks.py" "${SCRIPT_DIR}/step02_ATAC_infering_consensus_peaks.py"
 
 run_step "step03_ATAC_qc.py" "${SCRIPT_DIR}/step03_ATAC_qc.py"
 
