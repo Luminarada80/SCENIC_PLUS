@@ -9,3 +9,7 @@ pycisTopic/
 *.mtx
 __pycache__/
 tmp/
+LOGS/
+*pkl
+outs/
+*.pybiomart.sqlite

@@ -16,7 +16,7 @@ with open(file_path, 'rb') as file:
 os.environ['MALLET_MEMORY'] = '200G'
 from pycisTopic.lda_models import run_cgs_models_mallet
 # Configure path Mallet
-mallet_path="/gpfs/Home/haa5704/scenicplus/Mallet-202108/bin/mallet"
+mallet_path="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scenicplus/Mallet-202108/bin/mallet"
 # Run models
 models=run_cgs_models_mallet(
     cistopic_obj,
