@@ -13,3 +13,8 @@ LOGS/
 *pkl
 outs/
 *.pybiomart.sqlite
+aertslab_motif_colleciton/
+*.png
+cbust
+bedGraphToBigWig
+*.bedgraph

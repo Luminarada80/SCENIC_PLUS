@@ -48,3 +48,4 @@ with open(os.path.join(out_dir, "consensus_peak_calling/bed_paths.tsv"), "wt") a
     for v in bed_paths:
         _ = f.write(f"{v}\t{bed_paths[v]}\n")
 
+

@@ -49,6 +49,7 @@ from pycisTopic.iterative_peak_calling import get_consensus_peaks
 # Other param
 peak_half_width=250
 path_to_blacklist=shared_variables.path_to_mm10_blacklist
+
 # Get consensus peaks
 consensus_peaks = get_consensus_peaks(
     narrow_peaks_dict = narrow_peak_dict,

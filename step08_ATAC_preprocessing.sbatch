@@ -1,19 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=step_08_preparing_fasta_from_consensus_regions
+#SBATCH --job-name=step8_scenicplus
 #SBATCH --output=step_08_preprocessing_output.txt
 #SBATCH --error=step_08_preprocessing_error.txt
-#SBATCH --mem-per-cpu=1000
-#SBATCH --cpus-per-task=64
-#SBATCH -p memory
+#SBATCH -p compute
+#SBATCH --nodes=1
+#SBATCH -c 16
+#SBATCH --mem-per-cpu=16G
 #SBATCH -A lab_uzun
 #SBATCH --nodes 1
-#SBATCH --ntasks 1
-#SBATCH --mail-user=habdelhalim@pennstatehealth.psu.edu
-#SBATCH --mail-type=ALL
-#srun source /gpfs/Home/haa5704/miniconda3/envs/scenicplus
+#srun source /gpfs/Home/esm5360/miniconda3/envs/scenicplus
 
-source /gpfs/Home/haa5704/.bashrc
-conda init
 conda activate scenicplus
 
 module load cluster
@@ -32,3 +28,5 @@ ${SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh \
         1000 \
         yes
 head -n 2 hg38.10x_brain.with_1kb_bg_padding.fa
+
+

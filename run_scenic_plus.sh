@@ -4,8 +4,8 @@
 #SBATCH --nodes=1
 #SBATCH -c 16
 #SBATCH --mem-per-cpu=16G
-#SBATCH -o LOGS/scenic_plus.log
-#SBATCH -e LOGS/scenic_plus.err
+#SBATCH -o LOGS/scenic_plus_test.log
+#SBATCH -e LOGS/scenic_plus_tes.err
 #srun source /gpfs/Home/esm5360/miniconda3/envs/scenicplus
 
 conda activate scenicplus
@@ -49,11 +49,13 @@ run_bash_step() {
   /usr/bin/time -v "$script_path" "$@" 2>> "${LOG_DIR}/${step_name}_time_mem.log"
 }
 
-# run_python_step "step00_RNA_preprocessing.py" "${SCRIPT_DIR}/step00_RNA_preprocessing.py"
+# run_python_step "step00_RNA_preprocessing" "${SCRIPT_DIR}/step00_RNA_preprocessing.py"
 
 # run_python_step "step01_preprocessing_pseudobulk_profiles.py" "${SCRIPT_DIR}/step01_ATAC_preprocessing_pseudobulk_profiles.py"
 
 # run_python_step "step02_ATAC_infering_consensus_peaks.py" "${SCRIPT_DIR}/step02_ATAC_infering_consensus_peaks.py"
+
+# run_python_step "step01_ATAC_preprocessing" "${SCRIPT_DIR}/ATAC_preprocessing.py"
 
 # Get the mm10 TSS data
 # pycistopic tss get_tss \
@@ -93,39 +95,37 @@ run_bash_step() {
 # wget -O "${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public.zip https://resources.aertslab.org/cistarget/motif_collections/v10nr_clust_public/v10nr_clust_public.zip"
 # unzip -q "${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public.zip"
 
-FASTA_FILE="/gpfs/Labs/Uzun/RESULTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scenicplus/mESC_new_scenicplus/outs/mm10.mESC.with_1kb_bg_padding.fa"
+FASTA_FILE="${OUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 
 # Ensure the directory exists
-# mkdir -p "$(dirname "${FASTA_FILE}")"
+mkdir -p "$(dirname "${FASTA_FILE}")"
 
 # Create an empty file
-# touch "${FASTA_FILE}"
+touch "${FASTA_FILE}"
 
-# module load bedtools/2.31.0
+module load bedtools/2.31.0
 
-# #Creates the custom cistarget database
-# run_bash_step "step08_ATAC_preprocessing" "${CISTARGET_SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh" \
-#     ${GENOME_FASTA} \
-#     ${CHROMSIZES} \
-#     ${REGION_BED} \
-#     ${FASTA_FILE} \
-#     1000 \
-#     yes \
-
-
+#Creates the custom cistarget database
+run_bash_step "test_step08_ATAC_preprocessing" "${CISTARGET_SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh" \
+    ${GENOME_FASTA} \
+    ${CHROMSIZES} \
+    ${REGION_BED} \
+    ${FASTA_FILE} \
+    1000 \
+    yes \
 
 # Creating the ranking and score databases
-
 CBDIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/singletons"
 MOTIF_LIST="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/motifs.txt"
 
 export PATH=${SCRIPT_DIR}:$PATH
 
-run_python_step "step09_creating_cistarget_databases" "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
+run_python_step "test_step09_creating_cistarget_databases" "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
     -f ${FASTA_FILE} \
     -M ${CBDIR} \
     -m ${MOTIF_LIST} \
     --min 5 \
     --max 1000 \
-    -o ${OUT_DIR}/${DATABASE_PREFIX} \
+    -o ${OUT_DIR} \
+    --bgpadding 1000 \
     -t 16
