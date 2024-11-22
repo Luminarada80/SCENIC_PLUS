@@ -18,3 +18,5 @@ aertslab_motif_colleciton/
 cbust
 bedGraphToBigWig
 *.bedgraph
+pyflame/
+scplus_pipeline/

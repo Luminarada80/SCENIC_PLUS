@@ -18,4 +18,6 @@ adata_rna.var_names_make_unique()
 # Assign metadata if available
 adata_rna.obs['modality'] = 'RNA'
 
+adata_rna.raw = adata_rna.copy()
+
 adata_rna.write("adata_final.h5ad")
