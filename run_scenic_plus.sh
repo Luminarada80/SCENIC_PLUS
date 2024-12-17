@@ -2,8 +2,8 @@
 
 #SBATCH -p compute
 #SBATCH --nodes=1
-#SBATCH -c 36
-#SBATCH --mem-per-cpu=4G
+#SBATCH -c 8
+#SBATCH --mem-per-cpu=16G
 #SBATCH -o LOGS/scenic_plus_test.log
 #SBATCH -e LOGS/scenic_plus_test.err
 #srun source /gpfs/Home/esm5360/miniconda3/envs/scenicplus
@@ -34,9 +34,9 @@ ATAC_FILE_NAME="multiomic_data_1000_cells_E7.5_rep1_ATAC.csv"
 MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
 
 # OUTPUT DIRECTORIES
-OUT_DIR="${SCRIPT_DIR}/outs"
-QC_DIR="${OUT_DIR}/qc"
-REGION_BED="${OUT_DIR}/consensus_peak_calling/consensus_regions.bed"
+OUTPUT_DIR="${SCRIPT_DIR}/outs"
+QC_DIR="${OUTPUT_DIR}/qc"
+REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
 
 
 # Function to run each Python step with timing and memory tracking
@@ -61,40 +61,46 @@ run_bash_step() {
 }
 
 # REFORMATTED
-run_python_step "Step01.RNA_preprocessing" "${SCRIPT_DIR}/Step01.RNA_preprocessing.py" \
-  --input_dir "${INPUT_DIR}" \
-  --output_dir "${OUTPUT_DIR}" \
-  --rna_file_name "${RNA_FILE_NAME}"
+# run_python_step "Step01.RNA_preprocessing" "${SCRIPT_DIR}/Step01.RNA_preprocessing.py" \
+#   --input_dir "${INPUT_DIR}" \
+#   --output_dir "${OUTPUT_DIR}" \
+#   --rna_file_name "${RNA_FILE_NAME}"
 
-# # REFORMATTED
+# ========= DEPRECATED =========
+# REFORMATTED
 # run_python_step "Step02.preprocessing_pseudobulk_profiles.py" "${SCRIPT_DIR}/Step02.ATAC_preprocessing_pseudobulk_profiles.py" \
-
+#   --input_dir "${INPUT_DIR}" \
+#   --output_dir "${OUTPUT_DIR}" \
+#   --tmp_dir "${TMP_DIR}" \
+#   --mm10_blacklist "${MM10_BLACKLIST}"
 
 # run_python_step "Step03.ATAC_infering_consensus_peaks.py" "${SCRIPT_DIR}/Step03.ATAC_infering_consensus_peaks.py" \
 #   --input_dir "${INPUT_DIR}" \
 #   --output_dir "${OUTPUT_DIR}" \
 #   --tmp_dir "${TMP_DIR}" \
 #   --mm10_blacklist "${MM10_BLACKLIST}"
+# ==============================
 
+# run_python_step "Step04.ATAC_preprocessing" "${SCRIPT_DIR}/Step04.ATAC_preprocessing.py" \
+#   --input_dir "${INPUT_DIR}" \
+#   --output_dir "${OUTPUT_DIR}" \
+#   --tmp_dir "${TEMP_DIR}" \
+#   --atac_file_name "${ATAC_FILE_NAME}" \
+#   --mm10_blacklist "${MM10_BLACKLIST}"
 
-run_python_step "Step04.ATAC_preprocessing" "${SCRIPT_DIR}/Step04.ATAC_preprocessing.py" \
-  --input_dir "${INPUT_DIR}" \
-  --output_dir "${OUTPUT_DIR}" \
-  --tmp_dir "${TMP_DIR}" \
-  --atac_file_name "${ATAC_FILE_NAME}" \
-  --mm10_blacklist "${MM10_BLACKLIST}"
+# #Get the mm10 TSS data
+# echo "Getting Transcription Start Site data"
+# pycistopic tss get_tss \
+#   --output "${QC_DIR}/tss.bed" \
+#   --name "mmusculus_gene_ensembl" \
+#   --to-chrom-source ucsc \
+#   --ucsc mm10
 
-#Get the mm10 TSS data
-pycistopic tss get_tss \
-  --output "${QC_DIR}/tss.bed" \
-  --name "mmusculus_gene_ensembl" \
-  --to-chrom-source ucsc \
-  --ucsc mm10
-
+# ==== DEPRECATED =======
 # # Run pycistopic qc
 # pycistopic qc \
 #   --fragments "${DATA_DIR}/GSM6205427_E7.5_rep1_ATAC_fragments.tsv.gz" \
-#   --regions "${OUT_DIR}/consensus_peak_calling/consensus_regions.bed" \
+#   --regions "${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed" \
 #   --tss "${QC_DIR}/tss.bed" \
 #   --output "${QC_DIR}/mESC"
 
@@ -107,9 +113,7 @@ pycistopic tss get_tss \
 # run_python_step "Step08.ATAC_model_selection.py" "${SCRIPT_DIR}/step06_ATAC_model_selection.py"
 
 # run_python_step "Step09.ATAC_topic_binarization_to_save_region_sets.py" "${SCRIPT_DIR}/step07_ATAC_topic_binarization_to_save_region_sets.py"
-
-# Make sure that you have downloaded the create_cisTarget_databases directory from GitHub
-# git clone https://github.com/aertslab/create_cisTarget_databases
+# ========================
 
 # Download cluster-buster
 # wget https://resources.aertslab.org/cistarget/programs/cbust > chmod a+x cbust
@@ -122,12 +126,12 @@ pycistopic tss get_tss \
 # wget -O "${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public.zip https://resources.aertslab.org/cistarget/motif_collections/v10nr_clust_public/v10nr_clust_public.zip"
 # unzip -q "${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public.zip"
 
-# FASTA_FILE="${OUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
+FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 
-# # Ensure the directory exists
+# # # Ensure the directory exists
 # mkdir -p "$(dirname "${FASTA_FILE}")"
 
-# # Create an empty file
+# # # Create an empty file
 # touch "${FASTA_FILE}"
 
 # module load bedtools/2.31.0
@@ -143,7 +147,7 @@ pycistopic tss get_tss \
 
 # # Creating the ranking and score databases
 # CBDIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/singletons"
-# MOTIF_LIST="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/motifs.txt"
+# MOTIF_LIST="${INPUT_DIR}/motifs.txt"
 
 # export PATH=${SCRIPT_DIR}:$PATH
 
@@ -153,9 +157,9 @@ pycistopic tss get_tss \
 #     -m ${MOTIF_LIST} \
 #     --min 5 \
 #     --max 1000 \
-#     -o ${OUT_DIR} \
+#     -o ${OUTPUT_DIR} \
 #     --bgpadding 0 \
-#     -t 64
+#     -t 36
 
 # Installed scenicplus
 # cd scenicplus
@@ -169,6 +173,14 @@ pycistopic tss get_tss \
 
 # Modify the config.yaml in #scplus_pipeline/Snakemake/config
 
-# cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scplus_pipeline/Snakemake
-# #  --rerun-incomplete --unlock
-# snakemake --cores 36 --latency-wait 600
+# Need to create these files, they are only appended to
+# (created in commands.py of cli module in scenicplus source code)
+touch "${OUTPUT_DIR}/dem_results.hdf5"
+touch "${OUTPUT_DIR}/dem_results.html"
+
+touch "${OUTPUT_DIR}/ctx_results.hdf5"
+touch "${OUTPUT_DIR}/ctx_results.html"
+
+cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scplus_pipeline/Snakemake
+#  --rerun-incomplete --unlock
+snakemake --cores 8 --latency-wait 600

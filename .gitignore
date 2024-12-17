@@ -22,3 +22,4 @@ pyflame/
 scplus_pipeline/
 input/
 old_code/
+*.feather

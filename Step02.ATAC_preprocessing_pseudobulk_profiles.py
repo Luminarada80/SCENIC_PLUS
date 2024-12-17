@@ -26,10 +26,6 @@ mm10_blacklist = args.mm10_blacklist
 cell_data = pd.read_table(f"{input_dir}/{atac_file_name}", header=[0])
 print(cell_data.head())
 
-fragments_dict = {
-    "E7.5_rep1": shared_variables.fragments_dict
-}
-
 chromsizes = pd.read_table(
     'https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes',
     header = None,

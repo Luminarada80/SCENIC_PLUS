@@ -46,6 +46,16 @@ tmp_dir = args.tmp_dir
 atac_file_name = args.atac_file_name
 mm10_blacklist = args.mm10_blacklist
 
+chromsizes = pd.read_table(
+    'https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes',
+    header = None,
+    names = ["Chromosome", "End"]
+)
+chromsizes.insert(1, "Start", 0)
+
+chromsizes.to_csv(f'{output_dir}/chromsizes.tsv', index=False, sep='\t')
+print(chromsizes.head())
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -63,17 +73,19 @@ atac_data = atac_data.apply(pd.to_numeric, errors='coerce')
 # Fill missing values with 0
 atac_data.fillna(0, inplace=True)
 
+# Uses the number of peaks at the region rather than the fragments
 # Extract regions from row names (assuming "chr:start-end" format)
 regions = atac_data.index.str.extract(r"(chr[^:]+):(\d+)-(\d+)")
 regions.columns = ["Chrom", "Start", "End"]
 regions["Start"] = regions["Start"].astype(int)
 regions["End"] = regions["End"].astype(int)
-print(atac_data.sum(axis=1).head())  # Summation output for rows
-
 
 # Calculate total signal for each region
 regions["Score"] = atac_data.sum(axis=1).values
-print(regions.head())  # Check final result
+logging.info(regions.head())
+
+if not os.path.exists(f'{output_dir}/consensus_peak_calling/'):
+    os.makedirs(f'{output_dir}/consensus_peak_calling/')
 
 # Save to BED format
 regions[["Chrom", "Start", "End", "Score"]].to_csv(f'{output_dir}/consensus_peak_calling/consensus_regions.bed', sep="\t", header=False, index=False)
