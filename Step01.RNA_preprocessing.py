@@ -2,8 +2,26 @@ import scanpy as sc
 import pandas as pd
 import numpy as np
 
+import argparse
+
+# Define command-line arguments
+parser = argparse.ArgumentParser(description="Process scRNA-seq and scATAC-seq data for pseudo-bulk analysis.")
+
+# Add arguments for file paths and directories
+parser.add_argument("--input_dir", required=True, help="Path to the data input directory")
+parser.add_argument("--output_dir", required=True, help="path to the output directory")
+parser.add_argument("--rna_file_name")
+
+
+# Parse arguments
+args = parser.parse_args()
+
+input_dir = args.input_dir
+output_dir = args.output_dir
+rna_file_name = args.rna_file_name
+
 # Paths to preprocessed RNA and ATAC data
-rna_csv_path = "/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/LINGER/LINGER_MESC_SC_DATA/FULL_MESC_SAMPLES/multiomic_data_1000_cells_E7.5_rep1_RNA.csv"
+rna_csv_path = f"{input_dir}/{rna_file_name}"
 
 # Read RNA-seq and ATAC-seq data
 rna_data = pd.read_csv(rna_csv_path, index_col=0)  # Genes x Cells
@@ -20,4 +38,4 @@ adata_rna.obs['modality'] = 'RNA'
 
 adata_rna.raw = adata_rna.copy()
 
-adata_rna.write("adata_final.h5ad")
+adata_rna.write(f"{output_dir}/adata_final.h5ad")

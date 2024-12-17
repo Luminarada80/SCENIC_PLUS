@@ -17,16 +17,27 @@ echo $(which python)
 export PYTHONPATH=$PYTHONPATH:/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/pycisTopic/src
 
 LOG_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/LOGS"
-SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS"
-OUT_DIR="/gpfs/Labs/Uzun/RESULTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scenicplus/mESC_new_scenicplus/outs/"
-QC_DIR="/gpfs/Labs/Uzun/RESULTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/outs/qc"
-DATA_DIR="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.SC_MO_TRN_BENCHMARKING.MIRA/SCENIC_PLUS.HABIBA/data"
 
-# Paths to create a custom cistarget database
-CISTARGET_SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/create_cisTarget_databases/"
-GENOME_FASTA="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mm10.fa"
-CHROMSIZES="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mm10.chrom.sizes"
-REGION_BED="/gpfs/Labs/Uzun/RESULTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scenicplus/mESC_new_scenicplus/outs/consensus_peak_calling/consensus_regions.bed"
+# SCRIPT DIRECTORIES
+SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS"
+CISTARGET_SCRIPT_DIR="${SCRIPT_DIR}/create_cisTarget_databases/"
+TEMP_DIR="${SCRIPT_DIR}/tmp"
+
+# INPUT DIRECTORIES
+INPUT_DIR="${SCRIPT_DIR}/input"
+CHROMSIZES="${INPUT_DIR}/mm10.chrom.sizes"
+GENOME_FASTA="${INPUT_DIR}/mm10.fa"
+
+RNA_FILE_NAME="multiomic_data_1000_cells_E7.5_rep1_RNA.csv"
+ATAC_FILE_NAME="multiomic_data_1000_cells_E7.5_rep1_ATAC.csv"
+
+MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
+
+# OUTPUT DIRECTORIES
+OUT_DIR="${SCRIPT_DIR}/outs"
+QC_DIR="${OUT_DIR}/qc"
+REGION_BED="${OUT_DIR}/consensus_peak_calling/consensus_regions.bed"
+
 
 # Function to run each Python step with timing and memory tracking
 run_python_step() {
@@ -49,20 +60,36 @@ run_bash_step() {
   /usr/bin/time -v "$script_path" "$@" 2>> "${LOG_DIR}/${step_name}_time_mem.log"
 }
 
-# run_python_step "Step01.RNA_preprocessing" "${SCRIPT_DIR}/Step01.RNA_preprocessing.py"
+# REFORMATTED
+run_python_step "Step01.RNA_preprocessing" "${SCRIPT_DIR}/Step01.RNA_preprocessing.py" \
+  --input_dir "${INPUT_DIR}" \
+  --output_dir "${OUTPUT_DIR}" \
+  --rna_file_name "${RNA_FILE_NAME}"
 
-# run_python_step "Step01.preprocessing_pseudobulk_profiles.py" "${SCRIPT_DIR}/step01_ATAC_preprocessing_pseudobulk_profiles.py"
+# # REFORMATTED
+# run_python_step "Step02.preprocessing_pseudobulk_profiles.py" "${SCRIPT_DIR}/Step02.ATAC_preprocessing_pseudobulk_profiles.py" \
 
-# run_python_step "Step02.ATAC_infering_consensus_peaks.py" "${SCRIPT_DIR}/step02_ATAC_infering_consensus_peaks.py"
 
-# run_python_step "Step02.ATAC_preprocessing" "${SCRIPT_DIR}/Step02.ATAC_preprocessing.py"
+# run_python_step "Step03.ATAC_infering_consensus_peaks.py" "${SCRIPT_DIR}/Step03.ATAC_infering_consensus_peaks.py" \
+#   --input_dir "${INPUT_DIR}" \
+#   --output_dir "${OUTPUT_DIR}" \
+#   --tmp_dir "${TMP_DIR}" \
+#   --mm10_blacklist "${MM10_BLACKLIST}"
 
-# Get the mm10 TSS data
-# pycistopic tss get_tss \
-#   --output "${QC_DIR}/tss.bed" \
-#   --name "mmusculus_gene_ensembl" \
-#   --to-chrom-source ucsc \
-#   --ucsc mm10
+
+run_python_step "Step04.ATAC_preprocessing" "${SCRIPT_DIR}/Step04.ATAC_preprocessing.py" \
+  --input_dir "${INPUT_DIR}" \
+  --output_dir "${OUTPUT_DIR}" \
+  --tmp_dir "${TMP_DIR}" \
+  --atac_file_name "${ATAC_FILE_NAME}" \
+  --mm10_blacklist "${MM10_BLACKLIST}"
+
+#Get the mm10 TSS data
+pycistopic tss get_tss \
+  --output "${QC_DIR}/tss.bed" \
+  --name "mmusculus_gene_ensembl" \
+  --to-chrom-source ucsc \
+  --ucsc mm10
 
 # # Run pycistopic qc
 # pycistopic qc \
@@ -71,15 +98,15 @@ run_bash_step() {
 #   --tss "${QC_DIR}/tss.bed" \
 #   --output "${QC_DIR}/mESC"
 
-# run_python_step "Step03.ATAC_qc.py" "${SCRIPT_DIR}/step03_ATAC_qc.py"
+# run_python_step "Step05.ATAC_qc.py" "${SCRIPT_DIR}/Step05.ATAC_qc.py"
 
-# run_python_step "Step04.ATAC_creating_cistopic_object.py" "${SCRIPT_DIR}/step04_ATAC_creating_cistopic_object.py"
+# run_python_step "Step06.ATAC_creating_cistopic_object.py" "${SCRIPT_DIR}/Step06.ATAC_creating_cistopic_object.py"
 
-# run_python_step "Step05.ATAC_run_models.py" "${SCRIPT_DIR}/step05_ATAC_run_models.py"
+# run_python_step "Step07.ATAC_run_models.py" "${SCRIPT_DIR}/step05_ATAC_run_models.py"
 
-# run_python_step "Step06.ATAC_model_selection.py" "${SCRIPT_DIR}/step06_ATAC_model_selection.py"
+# run_python_step "Step08.ATAC_model_selection.py" "${SCRIPT_DIR}/step06_ATAC_model_selection.py"
 
-# run_python_step "Step07.ATAC_topic_binarization_to_save_region_sets.py" "${SCRIPT_DIR}/step07_ATAC_topic_binarization_to_save_region_sets.py"
+# run_python_step "Step09.ATAC_topic_binarization_to_save_region_sets.py" "${SCRIPT_DIR}/step07_ATAC_topic_binarization_to_save_region_sets.py"
 
 # Make sure that you have downloaded the create_cisTarget_databases directory from GitHub
 # git clone https://github.com/aertslab/create_cisTarget_databases
@@ -106,7 +133,7 @@ run_bash_step() {
 # module load bedtools/2.31.0
 
 # #Creates the custom cistarget database
-# run_bash_step "Step08.cisTarget_ATAC_preprocessing" "${CISTARGET_SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh" \
+# run_bash_step "Step10.cisTarget_ATAC_preprocessing" "${CISTARGET_SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh" \
 #     ${GENOME_FASTA} \
 #     ${CHROMSIZES} \
 #     ${REGION_BED} \
@@ -120,7 +147,7 @@ run_bash_step() {
 
 # export PATH=${SCRIPT_DIR}:$PATH
 
-# run_python_step "Step09.creating_cistarget_databases" "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
+# run_python_step "Step11.creating_cistarget_databases" "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
 #     -f ${FASTA_FILE} \
 #     -M ${CBDIR} \
 #     -m ${MOTIF_LIST} \
@@ -142,6 +169,6 @@ run_bash_step() {
 
 # Modify the config.yaml in #scplus_pipeline/Snakemake/config
 
-cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scplus_pipeline/Snakemake
-#  --rerun-incomplete --unlock
-snakemake --cores 64 --latency-wait 600
+# cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scplus_pipeline/Snakemake
+# #  --rerun-incomplete --unlock
+# snakemake --cores 36 --latency-wait 600
