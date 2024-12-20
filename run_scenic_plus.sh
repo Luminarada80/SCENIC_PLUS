@@ -2,7 +2,7 @@
 
 #SBATCH -p compute
 #SBATCH --nodes=1
-#SBATCH -c 8
+#SBATCH -c 32
 #SBATCH --mem-per-cpu=16G
 #SBATCH -o LOGS/scenic_plus_test.log
 #SBATCH -e LOGS/scenic_plus_test.err
@@ -142,7 +142,7 @@ FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 #     ${CHROMSIZES} \
 #     ${REGION_BED} \
 #     ${FASTA_FILE} \
-#     0 \
+#     1000 \
 #     yes \
 
 # # Creating the ranking and score databases
@@ -158,8 +158,8 @@ FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 #     --min 5 \
 #     --max 1000 \
 #     -o ${OUTPUT_DIR} \
-#     --bgpadding 0 \
-#     -t 36
+#     --bgpadding 1000 \
+#     -t 32
 
 # Installed scenicplus
 # cd scenicplus
@@ -173,14 +173,13 @@ FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 
 # Modify the config.yaml in #scplus_pipeline/Snakemake/config
 
-# Need to create these files, they are only appended to
-# (created in commands.py of cli module in scenicplus source code)
-touch "${OUTPUT_DIR}/dem_results.hdf5"
-touch "${OUTPUT_DIR}/dem_results.html"
-
-touch "${OUTPUT_DIR}/ctx_results.hdf5"
-touch "${OUTPUT_DIR}/ctx_results.html"
+# In order to run region_to_gene, you need to update dask to version 2024.5.0
+# `pip install dask==2024.5.0` (pip gives an error when updating but ignore it, this fixes it)
 
 cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scplus_pipeline/Snakemake
-#  --rerun-incomplete --unlock
-snakemake --cores 8 --latency-wait 600
+
+snakemake \
+ --cores 32 \
+ --latency-wait 600 \
+ >> "${LOG_DIR}/Step12.snakemake_time_mem.log"
+

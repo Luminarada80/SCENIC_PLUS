@@ -80,8 +80,9 @@ regions.columns = ["Chrom", "Start", "End"]
 regions["Start"] = regions["Start"].astype(int)
 regions["End"] = regions["End"].astype(int)
 
-# Calculate total signal for each region
-regions["Score"] = atac_data.sum(axis=1).values
+# Calculate mean signal for each region
+regions["Score"] = atac_data.mean(axis=1).values
+
 logging.info(regions.head())
 
 if not os.path.exists(f'{output_dir}/consensus_peak_calling/'):
