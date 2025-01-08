@@ -28,11 +28,11 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/miniconda3/lib
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
 STEP_01_RNA_PREPROCESSING=false
-STEP_02_ATAC_PREPROCESSING=true
-STEP_03_GET_TSS_DATA=true
-STEP_04_CREATE_FASTA=true
-STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=TRUE
-STEP_06_RUN_SNAKEMAKE_PIPELINE=TRUE
+STEP_02_ATAC_PREPROCESSING=false
+STEP_03_GET_TSS_DATA=false
+STEP_04_CREATE_FASTA=false
+STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
+STEP_06_RUN_SNAKEMAKE_PIPELINE=true
 
 ###############################################################################
 # PATH SETUP
@@ -70,7 +70,7 @@ run_python_step() {
     echo "Running ${step_name}..."
     /usr/bin/time -v /gpfs/Home/esm5360/miniconda3/envs/scenicplus/bin/python \
         "${script_path}" "$@" \
-        2>> "${LOG_DIR}/${step_name}_time_mem.log"
+        2> "${LOG_DIR}/${step_name}.log"
 }
 
 run_bash_step() {
@@ -79,7 +79,7 @@ run_bash_step() {
     shift 2  # Remove the first two arguments
     echo "Running ${step_name}..."
     /usr/bin/time -v "${script_path}" "$@" \
-        2>> "${LOG_DIR}/${step_name}_time_mem.log"
+        2> "${LOG_DIR}/${step_name}.log"
 }
 
 # Function to check if a directory exists, and create it if it doesn't
@@ -110,27 +110,7 @@ check_dir_exists() {
 }
 
 ###############################################################################
-# ADDITIONAL NOTES
-###############################################################################
-# 1. Download cluster-buster (cbust):
-#    wget https://resources.aertslab.org/cistarget/programs/cbust
-#    chmod a+x cbust
-#    export PATH=$(pwd):$PATH
-#
-# 2. Download the motif collection:
-#    mkdir -p "${SCRIPT_DIR}/aertslab_motif_colleciton"
-#    wget -O "${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public.zip" \
-#         "https://resources.aertslab.org/cistarget/motif_collections/v10nr_clust_public/v10nr_clust_public.zip"
-#    unzip -q "${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public.zip"
-#
-# 3. For region_to_gene, ensure dask is a compatible version:
-#    pip install "dask==2024.5.0"  (Ignore pip’s possible upgrade error)
-#
-# 4. Make sure bedtools is loaded if needed:
-#    module load bedtools/2.31.0
-
-###############################################################################
-# CHECK PATHS
+# CHECK PATHS AND DEPENDENCIES
 ###############################################################################
 
 # Check required directories
@@ -138,8 +118,8 @@ check_dir_exists "$CISTARGET_SCRIPT_DIR"
 check_dir_exists "$SCRIPT_DIR"
 
 # Check required files
-check_file_exists "$ATAC_FILE_NAME"
-check_file_exists "$RNA_FILE_NAME"
+check_file_exists "$INPUT_DIR/$ATAC_FILE_NAME"
+check_file_exists "$INPUT_DIR/$RNA_FILE_NAME"
 check_file_exists "$MM10_BLACKLIST"
 check_file_exists "$GENOME_FASTA"
 
@@ -149,6 +129,55 @@ check_or_create_dir "$OUTPUT_DIR"
 check_or_create_dir "$TEMP_DIR"
 check_or_create_dir "$QC_DIR"
 
+echo "All required files and directories found"
+
+# Check if 'cbust' is in the PATH
+if ! command -v cbust &> /dev/null; then
+    echo "'cbust' not found in PATH. Setting it up..."
+
+    # Download the cbust if its not in the script path
+    if [ ! -f "${SCRIPT_DIR}/cbust" ]; then
+        echo "cbust not downloaded, downloading..."
+        # Download cluster-buster (cbust)
+        wget https://resources.aertslab.org/cistarget/programs/cbust -O cbust
+
+    else
+        echo "cbust file found, adding to PATH"
+    fi
+
+    # Make it executable
+    chmod a+x cbust
+
+    # Add it to the PATH
+    export PATH=$(pwd):$PATH
+    echo "'cbust' has been added to PATH."
+
+else
+    echo "'cbust' is already in PATH."
+fi
+
+# Check for the motif collection directory and file or download
+MOTIF_DIR="${SCRIPT_DIR}/aertslab_motif_colleciton"
+MOTIF_ZIP="${MOTIF_DIR}/v10nr_clust_public.zip"
+MOTIF_URL="https://resources.aertslab.org/cistarget/motif_collections/v10nr_clust_public/v10nr_clust_public.zip"
+
+# Check if the motif collection already exists
+if [ ! -d "${MOTIF_DIR}/v10nr_clust_public" ]; then
+    echo "Motif collection not found. Downloading and extracting it now..."
+
+    # Create the motif collection directory if it doesn't exist
+    mkdir -p "${MOTIF_DIR}"
+
+    # Download the motif collection zip file
+    wget -O "${MOTIF_ZIP}" "${MOTIF_URL}"
+
+    # Extract the zip file
+    unzip -q "${MOTIF_ZIP}" -d "${MOTIF_DIR}"
+
+    echo "Motif collection downloaded and extracted to ${MOTIF_DIR}/v10nr_clust_public."
+else
+    echo "Motif collection exists at ${MOTIF_DIR}/v10nr_clust_public."
+fi
 
 ###############################################################################
 # STEP 1: RNA PREPROCESSING
@@ -181,7 +210,7 @@ if [ "$STEP_03_GET_TSS_DATA" = true ]; then
         --output "${QC_DIR}/tss.bed" \
         --name "mmusculus_gene_ensembl" \
         --to-chrom-source ucsc \
-        --ucsc mm10;
+        --ucsc mm10 > "${LOG_DIR}/Step 3: Getting Transcription Start Site data.log" 2>&1;
 fi
 
 ###############################################################################
@@ -224,5 +253,5 @@ fi
 if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
     echo "Step 6: Run SCENIC+ snakemake"
-    snakemake --cores 32 --latency-wait 600 >> "${LOG_DIR}/Step06.snakemake_time_mem.log"
+    snakemake --cores 32 --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
 fi

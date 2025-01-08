@@ -109,7 +109,7 @@ pickle.dump(
 )
 
 logging.info(f'\tStarting MALLET')
-# os.environ['MALLET_MEMORY'] = '200G'
+os.environ['MALLET_MEMORY'] = '200G'
 
 # Configure path Mallet
 mallet_path="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scenicplus/Mallet-202108/bin/mallet"
