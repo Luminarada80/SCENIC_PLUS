@@ -80,7 +80,7 @@ regions.columns = ["Chrom", "Start", "End"]
 regions["Start"] = regions["Start"].astype(int)
 regions["End"] = regions["End"].astype(int)
 
-# Calculate mean signal for each region
+# Try just using the peak matrix instead of mean signal for each region
 regions["Score"] = atac_data.mean(axis=1).values
 
 logging.info(regions.head())
