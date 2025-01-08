@@ -66,70 +66,6 @@ run_bash_step() {
 }
 
 ###############################################################################
-# STEP 1: RNA PREPROCESSING
-###############################################################################
-run_python_step "Step01.RNA_preprocessing" "${SCRIPT_DIR}/Step01.RNA_preprocessing.py" \
-    --input_dir "${INPUT_DIR}" \
-    --output_dir "${OUTPUT_DIR}" \
-    --rna_file_name "${RNA_FILE_NAME}"
-
-###############################################################################
-# STEP 2: ATAC PREPROCESSING
-###############################################################################
-run_python_step "Step02.ATAC_preprocessing" "${SCRIPT_DIR}/Step02.ATAC_preprocessing.py" \
-    --input_dir "${INPUT_DIR}" \
-    --output_dir "${OUTPUT_DIR}" \
-    --tmp_dir "${TEMP_DIR}" \
-    --atac_file_name "${ATAC_FILE_NAME}" \
-    --mm10_blacklist "${MM10_BLACKLIST}"
-
-###############################################################################
-# STEP 3: GET TSS DATA
-###############################################################################
-echo "Getting Transcription Start Site data..."
-pycistopic tss get_tss \
-    --output "${QC_DIR}/tss.bed" \
-    --name "mmusculus_gene_ensembl" \
-    --to-chrom-source ucsc \
-    --ucsc mm10
-
-###############################################################################
-# STEP 4: CREATE FASTA WITH PADDED BACKGROUND
-###############################################################################
-run_bash_step "Step10.cisTarget_ATAC_preprocessing" \
-    "${CISTARGET_SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh" \
-    "${GENOME_FASTA}" \
-    "${CHROMSIZES}" \
-    "${REGION_BED}" \
-    "${FASTA_FILE}" \
-    1000 \
-    yes
-
-###############################################################################
-# STEP 5: CREATE CISTARGET MOTIF DATABASES
-###############################################################################
-# Uncomment and set these if needed for your motif database creation
-# CBDIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/singletons"
-# MOTIF_LIST="${INPUT_DIR}/motifs.txt"
-
-# run_python_step "Step11.creating_cistarget_databases" \
-#     "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
-#     -f "${FASTA_FILE}" \
-#     -M "${CBDIR}" \
-#     -m "${MOTIF_LIST}" \
-#     --min 5 \
-#     --max 1000 \
-#     -o "${OUTPUT_DIR}" \
-#     --bgpadding 1000 \
-#     -t 32
-
-###############################################################################
-# STEP 6: RUN SNAKEMAKE PIPELINE
-###############################################################################
-cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
-snakemake --cores 32 --latency-wait 600 >> "${LOG_DIR}/Step12.snakemake_time_mem.log"
-
-###############################################################################
 # ADDITIONAL NOTES
 ###############################################################################
 # 1. Download cluster-buster (cbust):
@@ -148,3 +84,69 @@ snakemake --cores 32 --latency-wait 600 >> "${LOG_DIR}/Step12.snakemake_time_mem
 #
 # 4. Make sure bedtools is loaded if needed:
 #    module load bedtools/2.31.0
+
+###############################################################################
+# STEP 1: RNA PREPROCESSING
+###############################################################################
+run_python_step "Step 1: RNA preprocessing" "${SCRIPT_DIR}/Step01.RNA_preprocessing.py" \
+    --input_dir "${INPUT_DIR}" \
+    --output_dir "${OUTPUT_DIR}" \
+    --rna_file_name "${RNA_FILE_NAME}"
+
+###############################################################################
+# STEP 2: ATAC PREPROCESSING
+###############################################################################
+run_python_step "Step 2: ATAC preprocessing" "${SCRIPT_DIR}/Step02.ATAC_preprocessing.py" \
+    --input_dir "${INPUT_DIR}" \
+    --output_dir "${OUTPUT_DIR}" \
+    --tmp_dir "${TEMP_DIR}" \
+    --atac_file_name "${ATAC_FILE_NAME}" \
+    --mm10_blacklist "${MM10_BLACKLIST}"
+
+###############################################################################
+# STEP 3: GET TSS DATA
+###############################################################################
+echo "Step 3: Getting Transcription Start Site data"
+pycistopic tss get_tss \
+    --output "${QC_DIR}/tss.bed" \
+    --name "mmusculus_gene_ensembl" \
+    --to-chrom-source ucsc \
+    --ucsc mm10
+
+###############################################################################
+# STEP 4: CREATE FASTA WITH PADDED BACKGROUND
+###############################################################################
+module load bedtools/2.31.0
+run_bash_step "Step 4: Prepare fasta from consensus regions" \
+    "${CISTARGET_SCRIPT_DIR}/create_fasta_with_padded_bg_from_bed.sh" \
+    "${GENOME_FASTA}" \
+    "${CHROMSIZES}" \
+    "${REGION_BED}" \
+    "${FASTA_FILE}" \
+    1000 \
+    yes
+
+###############################################################################
+# STEP 5: CREATE CISTARGET MOTIF DATABASES
+###############################################################################
+# Uncomment and set these if needed for your motif database creation
+CBDIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/singletons"
+MOTIF_LIST="${INPUT_DIR}/motifs.txt"
+
+run_python_step "Step 5: Create cistarget databases" \
+    "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
+    -f "${FASTA_FILE}" \
+    -M "${CBDIR}" \
+    -m "${MOTIF_LIST}" \
+    --min 5 \
+    --max 1000 \
+    -o "${OUTPUT_DIR}" \
+    --bgpadding 1000 \
+    -t 32
+
+###############################################################################
+# STEP 6: RUN SNAKEMAKE PIPELINE
+###############################################################################
+cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
+echo "Step 6: Run SCENIC+ snakemake"
+snakemake --cores 32 --latency-wait 600 >> "${LOG_DIR}/Step12.snakemake_time_mem.log"
