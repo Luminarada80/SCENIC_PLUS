@@ -116,11 +116,9 @@ mallet_path="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCEN
 
 # n_topics=[2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
 
-atac_data_sparse = csr_matrix(atac_data.values)
-
 # Run models
 models=run_cgs_models_mallet(
-    atac_data_sparse,
+    cistopic_obj,
     n_topics=[2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
     n_cpu=64,
     n_iter=150,
