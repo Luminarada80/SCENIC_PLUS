@@ -13,6 +13,8 @@
 ###############################################################################
 # ENVIRONMENT SETUP
 ###############################################################################
+set -e
+
 conda activate scenicplus
 cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS
 
