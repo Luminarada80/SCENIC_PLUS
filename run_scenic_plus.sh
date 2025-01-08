@@ -56,6 +56,10 @@ MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
 FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 
+echo "RNA Data File: $RNA_FILE_NAME"
+echo "ATAC Data File: $ATAC_FILE_NAME"
+echo "Genome FASTA File: $GENOME_FASTA"
+
 ###############################################################################
 # FUNCTION DEFINITIONS
 ###############################################################################
@@ -78,6 +82,33 @@ run_bash_step() {
         2>> "${LOG_DIR}/${step_name}_time_mem.log"
 }
 
+# Function to check if a directory exists, and create it if it doesn't
+check_or_create_dir() {
+    local dir_path="$1"
+    if [ ! -d "$dir_path" ]; then
+        echo "Directory '$dir_path' does not exist. Creating it now..."
+        mkdir -p "$dir_path"
+    fi
+}
+
+# Function to check if a file exists, and exit with an error if it doesn't
+check_file_exists() {
+    local file_path="$1"
+    if [ ! -f "$file_path" ]; then
+        echo "Error: File '$file_path' does not exist!"
+        exit 1
+    fi
+}
+
+# Function to check if a directory exists, and exit with an error if it doesn't
+check_dir_exists() {
+    local dir_path="$1"
+    if [ ! -d "$dir_path" ]; then
+        echo "Error: Directory '$dir_path' does not exist!"
+        exit 1
+    fi
+}
+
 ###############################################################################
 # ADDITIONAL NOTES
 ###############################################################################
@@ -97,6 +128,27 @@ run_bash_step() {
 #
 # 4. Make sure bedtools is loaded if needed:
 #    module load bedtools/2.31.0
+
+###############################################################################
+# CHECK PATHS
+###############################################################################
+
+# Check required directories
+check_dir_exists "$CISTARGET_SCRIPT_DIR"
+check_dir_exists "$SCRIPT_DIR"
+
+# Check required files
+check_file_exists "$ATAC_FILE_NAME"
+check_file_exists "$RNA_FILE_NAME"
+check_file_exists "$MM10_BLACKLIST"
+check_file_exists "$GENOME_FASTA"
+
+# Check to see if SCENIC+ generated directories exist or create them
+check_or_create_dir "$LOG_DIR"
+check_or_create_dir "$OUTPUT_DIR"
+check_or_create_dir "$TEMP_DIR"
+check_or_create_dir "$QC_DIR"
+
 
 ###############################################################################
 # STEP 1: RNA PREPROCESSING
