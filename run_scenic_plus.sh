@@ -3,10 +3,11 @@
 ###############################################################################
 # SLURM DIRECTIVES
 ###############################################################################
+#SBATCH --job-name=SCENIC+
 #SBATCH -p compute
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=32
-#SBATCH --mem-per-cpu=16G
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=32G
 #SBATCH -o LOGS/scenic_plus_test.log
 #SBATCH -e LOGS/scenic_plus_test.err
 
@@ -19,10 +20,15 @@ conda activate scenicplus
 cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS
 
 echo "Python executable: $(which python)"
+echo ""
 
 # Add the local pycisTopic to the python path so it is recognized as a module
 export PYTHONPATH="${PYTHONPATH}:/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/pycisTopic/src"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/miniconda3/lib
+
+NUM_CPU=${SLURM_CPUS_PER_TASK}
+echo "Number of CPUs allocated: ${NUM_CPU}"
+echo ""
 
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
@@ -56,9 +62,11 @@ MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
 FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
 
-echo "RNA Data File: $RNA_FILE_NAME"
-echo "ATAC Data File: $ATAC_FILE_NAME"
-echo "Genome FASTA File: $GENOME_FASTA"
+echo "Input files:"
+echo "    RNA Data File: $RNA_FILE_NAME"
+echo "    ATAC Data File: $ATAC_FILE_NAME"
+echo "    Genome FASTA File: $GENOME_FASTA"
+echo ""
 
 ###############################################################################
 # FUNCTION DEFINITIONS
@@ -113,6 +121,7 @@ check_dir_exists() {
 # CHECK PATHS AND DEPENDENCIES
 ###############################################################################
 
+echo "Checking for all required directories and files"
 # Check required directories
 check_dir_exists "$CISTARGET_SCRIPT_DIR"
 check_dir_exists "$SCRIPT_DIR"
@@ -129,20 +138,22 @@ check_or_create_dir "$OUTPUT_DIR"
 check_or_create_dir "$TEMP_DIR"
 check_or_create_dir "$QC_DIR"
 
-echo "All required files and directories found"
+echo "    All required files and directories found"
+echo ""
 
+echo "Checking to see if Cluster-Buster is in the PATH"
 # Check if 'cbust' is in the PATH
 if ! command -v cbust &> /dev/null; then
-    echo "'cbust' not found in PATH. Setting it up..."
+    echo "    'cbust' not found in PATH. Setting it up..."
 
     # Download the cbust if its not in the script path
     if [ ! -f "${SCRIPT_DIR}/cbust" ]; then
-        echo "cbust not downloaded, downloading..."
+        echo "    cbust not downloaded, downloading..."
         # Download cluster-buster (cbust)
         wget https://resources.aertslab.org/cistarget/programs/cbust -O cbust
 
     else
-        echo "cbust file found, adding to PATH"
+        echo "    cbust file found, adding to PATH"
     fi
 
     # Make it executable
@@ -150,12 +161,14 @@ if ! command -v cbust &> /dev/null; then
 
     # Add it to the PATH
     export PATH=$(pwd):$PATH
-    echo "'cbust' has been added to PATH."
+    echo "    'cbust' has been added to PATH."
 
 else
-    echo "'cbust' is already in PATH."
+    echo "    'cbust' is already in PATH."
 fi
+echo ""
 
+echo "Checking if the Aertslab motif collection is downloaded"
 # Check for the motif collection directory and file or download
 MOTIF_DIR="${SCRIPT_DIR}/aertslab_motif_colleciton"
 MOTIF_ZIP="${MOTIF_DIR}/v10nr_clust_public.zip"
@@ -163,7 +176,7 @@ MOTIF_URL="https://resources.aertslab.org/cistarget/motif_collections/v10nr_clus
 
 # Check if the motif collection already exists
 if [ ! -d "${MOTIF_DIR}/v10nr_clust_public" ]; then
-    echo "Motif collection not found. Downloading and extracting it now..."
+    echo "    Motif collection not found. Downloading and extracting it now..."
 
     # Create the motif collection directory if it doesn't exist
     mkdir -p "${MOTIF_DIR}"
@@ -174,11 +187,19 @@ if [ ! -d "${MOTIF_DIR}/v10nr_clust_public" ]; then
     # Extract the zip file
     unzip -q "${MOTIF_ZIP}" -d "${MOTIF_DIR}"
 
-    echo "Motif collection downloaded and extracted to ${MOTIF_DIR}/v10nr_clust_public."
+    echo "    Motif collection downloaded and extracted to ${MOTIF_DIR}/v10nr_clust_public."
 else
-    echo "Motif collection exists at ${MOTIF_DIR}/v10nr_clust_public."
+    echo "    Motif collection exists at ${MOTIF_DIR}/v10nr_clust_public."
 fi
+echo ""
 
+# Update the n_cpu value in the config.yaml file
+CONFIG_FILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/config/config.yaml"
+sed -i "s/^\(\s*n_cpu:\s*\).*/\1${NUM_CPU}/" "${CONFIG_FILE}"
+echo "Updated config.yaml with n_cpu: ${NUM_CPU}"
+echo ""
+
+echo "Checks complete, starting pipeline"
 ###############################################################################
 # STEP 1: RNA PREPROCESSING
 ###############################################################################
@@ -244,14 +265,45 @@ if [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = true ]; then
         --max 1000 \
         -o "${OUTPUT_DIR}" \
         --bgpadding 1000 \
-        -t 32;
+        -t ${NUM_CPU};
 fi
 
 ###############################################################################
 # STEP 6: RUN SNAKEMAKE PIPELINE
 ###############################################################################
 if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
-    cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
     echo "Step 6: Run SCENIC+ snakemake"
-    snakemake --cores 32 --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
+    
+
+    # Check for Snakemake lock files
+    LOCK_FILE="$SCRIPT_DIR/scplus_pipeline/Snakemake/.snakemake/locks"
+    if [ -d "$LOCK_FILE" ]; then
+        echo "    Lock files detected at $LOCK_FILE"
+
+        # Use the SLURM job name for comparison
+        JOB_NAME="${SLURM_JOB_NAME}"  # Dynamically retrieve the job name from SLURM
+
+        # Check for running jobs with the same name, excluding the current job
+        RUNNING_COUNT=$(squeue --name="$JOB_NAME" --noheader | wc -l)
+
+        # If other SCENIC+ jobs are running and there are lock files, exit
+        if [ "$RUNNING_COUNT" -gt 1 ]; then
+            echo "    A job with the name '"$JOB_NAME"' is already running:"
+            echo "    Exiting to avoid conflicts."
+            exit 1
+        
+        # If no other SCENIC+ jobs are running and there are lock files, remove them
+        else
+            echo "    No other jobs with the name '"$JOB_NAME"', removing locks"
+            rm -rf "$LOCK_FILE"
+        fi
+        
+    else
+        echo "    No lock files detected."
+    fi
+
+    echo "    Running snakemake"
+
+    cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
+    snakemake --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
 fi

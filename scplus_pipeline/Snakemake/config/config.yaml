@@ -65,78 +65,76 @@ output_data:
 ###############################################################################
 params_general:
   temp_dir: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/tmp"
-  n_cpu: 32
+  n_cpu: 1
   seed: 666
 
 ###############################################################################
 # DATA PREPARATION PARAMETERS
 ###############################################################################
 params_data_preparation:
-  # **Prepare_GEX_ACC**
-  bc_transform_func: "\"lambda x: f'{x}'\""    # Default transformation function to keep barcodes intact.
-  is_multiome: True                            # Retain `True` if the dataset is single-cell multiome.
-  key_to_group_by: "sample_id"                 # Group cells by `sample_id` or any metadata column identifying groups.
-  nr_cells_per_metacells: 50                   # Increase number of cells per metacell for a robust aggregation.
+  # Prepare_GEX_ACC
+  bc_transform_func: "\"lambda x: f'{x}'\""
+  is_multiome: True
+  key_to_group_by: ""
+  nr_cells_per_metacells: 10
 
-  # **Prepare_menr**
-  direct_annotation: "Direct_annot"            # Use `Direct_annot` for more specific TF-motif assignments.
-  extended_annotation: "Orthology_annot"       # Retain `Orthology_annot` for cross-species analysis and extended annotations.
+  # Prepare_menr
+  direct_annotation: "Direct_annot"
+  extended_annotation: "Orthology_annot"
 
-  # **Download_genome_annotations**
-  species: "mmusculus"                         # Ensure species matches the organism (e.g., "hsapiens" for human data).
-  biomart_host: "http://www.ensembl.org"       # Standard host for downloading genome annotations.
+  # Download_genome_annotations
+  species: "mmusculus"
+  biomart_host: "http://www.ensembl.org"
 
-  # **Search_space**
-  search_space_upstream: "5000 10000"          # Increase upstream regions to capture distal regulatory elements.
-  search_space_downstream: "2000 5000"         # Broaden downstream regions for more comprehensive coverage.
-  search_space_extend_tss: "10 10"             # Retain default 10 bp extension for TSS to avoid overlaps.
-
+  # Search_space
+  search_space_upstream: "1000 5000"
+  search_space_downstream: "1000 5000"
+  search_space_extend_tss: "10 10"
 
 ###############################################################################
 # MOTIF ENRICHMENT PARAMETERS
 ###############################################################################
 params_motif_enrichment:
-  species: "mus_musculus"                     # Ensure species matches the dataset (e.g., "homo_sapiens" for human).
-  annotation_version: "v9-nr"                 # Use the latest annotation version available for accuracy.
-  motif_similarity_fdr: 0.01                  # More stringent FDR threshold for motif similarity to reduce false positives.
-  orthologous_identity_threshold: 0.25        # Filter orthologous motifs with <25% identity to reduce noise.
-  annotations_to_use: "Direct_annot Orthology_annot"=
+  species: "mus_musculus"
+  annotation_version: "v9-nr"
+  motif_similarity_fdr: 0.001
+  orthologous_identity_threshold: 0.0
+  annotations_to_use: "Direct_annot Orthology_annot"
 
-  # DEM Parameters
-  fraction_overlap_w_dem_database: 0.5        # Require a higher overlap with DEM database to ensure reliable matches.
-  dem_max_bg_regions: 2000                    # Increase background region limit for better statistical power.
-  dem_balance_number_of_promoters: True       # Retain promoter balancing for equitable representation.
-  dem_promoter_space: 1000                    # Extend promoter space for capturing distal regulatory elements.
-  dem_adj_pval_thr: 0.05                      # Adjust p-value threshold to be more stringent.
-  dem_log2fc_thr: 0.5                         # Increase log2 fold-change threshold to capture strong motifs.
-  dem_mean_fg_thr: 1.0                        # Require higher mean foreground motif counts.
-  dem_motif_hit_thr: 0.8                      # Raise motif hit threshold for stronger matches.
+  # DEM parameters
+  fraction_overlap_w_dem_database: 0.2
+  dem_max_bg_regions: 1000
+  dem_balance_number_of_promoters: True
+  dem_promoter_space: 500
+  dem_adj_pval_thr: 1
+  dem_log2fc_thr: 0.1
+  dem_mean_fg_thr: 0.005
+  dem_motif_hit_thr: 0.5
 
-  # CisTarget Parameters
-  fraction_overlap_w_ctx_database: 0.2        # Increase overlap threshold for context database.
-  ctx_auc_threshold: 0.01                     # Adjust AUC threshold slightly higher to filter weak matches.
-  ctx_nes_threshold: 3.0                      # Require higher NES for more reliable enrichment.
-  ctx_rank_threshold: 0.05                    # Tighten rank threshold for selecting top motifs.
+  # CisTarget parameters
+  fraction_overlap_w_ctx_database: 0.1
+  ctx_auc_threshold: 0.005
+  ctx_nes_threshold: 2.0
+  ctx_rank_threshold: 0.1
 
 ###############################################################################
 # INFERENCE PARAMETERS
 ###############################################################################
 params_inference:
   # TF-to-gene
-  tf_to_gene_importance_method: "GBM"         # Gradient Boosting Machines remain a robust choice.
+  tf_to_gene_importance_method: "GBM"
 
   # Region-to-gene
-  region_to_gene_importance_method: "RF"      # Consider "RF" (Random Forest) for greater interpretability.
-  region_to_gene_correlation_method: "SR"     # Spearman Rank (SR) remains standard for correlation.
+  region_to_gene_importance_method: "GBM"
+  region_to_gene_correlation_method: "SR"
 
-  # eGRN Inference
-  order_regions_to_genes_by: "importance"     # Importance ensures prioritization of the most relevant links.
-  order_TFs_to_genes_by: "importance"         # Keep TF-to-gene sorting based on importance.
-  gsea_n_perm: 10000                          # Increase permutations for more robust GSEA results.
-  quantile_thresholds_region_to_gene: "0.80 0.85 0.90"  # Adjust to capture more robust region-to-gene links.
-  top_n_regionTogenes_per_gene: "10 15 20"    # Broaden the selection of top region-to-gene links per gene.
-  top_n_regionTogenes_per_region: "5 10"      # Include top genes per region for regulatory balance.
-  min_regions_per_gene: 2                     # Ensure a minimum of 2 regions per gene to avoid spurious links.
-  rho_threshold: 0.1                          # Tighten correlation threshold for reliability.
-  min_target_genes: 15                        # Increase minimum target genes to filter weak regulators.
-
+  # eGRN inference
+  order_regions_to_genes_by: "importance"
+  order_TFs_to_genes_by: "importance"
+  gsea_n_perm: 1000
+  quantile_thresholds_region_to_gene: "0.85 0.90 0.95"
+  top_n_regionTogenes_per_gene: "5 10 15"
+  top_n_regionTogenes_per_region: ""
+  min_regions_per_gene: 0
+  rho_threshold: 0.05
+  min_target_genes: 10
