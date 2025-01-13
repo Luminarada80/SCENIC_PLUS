@@ -72,24 +72,41 @@ atac_data = atac_data.apply(pd.to_numeric, errors='coerce')
 # Fill missing values with 0
 atac_data.fillna(0, inplace=True)
 
-# Uses the number of peaks at the region rather than the fragments
 # Extract regions from row names (assuming "chr:start-end" format)
-regions = atac_data.index.str.extract(r"(chr[^:]+):(\d+)-(\d+)")
+regions = atac_data.index.to_series().str.extract(r"(chr[^:]+):(\d+)-(\d+)")
 regions.columns = ["Chrom", "Start", "End"]
 
+# Debug: Check indices and shape
+logging.info(f"Initial atac_data shape: {atac_data.shape}")
+logging.info(f"Initial regions shape: {regions.shape}")
+
 # Handle missing values in extracted data
-regions["Start"] = pd.to_numeric(regions["Start"], errors="coerce")  # Convert to numeric
-regions["End"] = pd.to_numeric(regions["End"], errors="coerce")  # Convert to numeric
+regions["Start"] = pd.to_numeric(regions["Start"], errors="coerce")
+regions["End"] = pd.to_numeric(regions["End"], errors="coerce")
 
 # Drop rows with NaN in Start or End
-regions.dropna(subset=["Start", "End"], inplace=True)
+valid_indices = regions.dropna(subset=["Start", "End"]).index
 
+# Debug: Log invalid indices
+invalid_indices = set(atac_data.index) - set(valid_indices)
+logging.info(f"Invalid indices removed: {len(invalid_indices)}")
+
+# Retain valid rows in regions and atac_data
+regions = regions.loc[valid_indices]
+atac_data = atac_data.loc[valid_indices]
+
+# Debug: Verify alignment
+logging.info(f"Post-alignment atac_data shape: {atac_data.shape}")
+logging.info(f"Post-alignment regions shape: {regions.shape}")
+
+# Convert Start and End to integers
 regions["Start"] = regions["Start"].astype(int)
 regions["End"] = regions["End"].astype(int)
 
-# Try just using the peak matrix instead of mean signal for each region
+# Calculate the mean signal for each region
 regions["Score"] = atac_data.mean(axis=1).values
 
+# Log a sample of the resulting regions DataFrame
 logging.info(regions.head())
 
 if not os.path.exists(f'{output_dir}/consensus_peak_calling/'):
