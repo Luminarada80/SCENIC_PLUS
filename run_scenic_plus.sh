@@ -33,10 +33,10 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=true
-STEP_02_ATAC_PREPROCESSING=true
-STEP_03_GET_TSS_DATA=true
-STEP_04_CREATE_FASTA=true
+STEP_01_RNA_PREPROCESSING=false
+STEP_02_ATAC_PREPROCESSING=false
+STEP_03_GET_TSS_DATA=false
+STEP_04_CREATE_FASTA=false
 STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 STEP_06_RUN_SNAKEMAKE_PIPELINE=true
 
@@ -211,7 +211,7 @@ if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MO
     else
         # Optional: Download the precomputed cisTarget database
         echo "    Downloading precomputed cisTarget database: rankings.feather file"
-        wget -q -O "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" \
+        curl -o -s -q  "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" \
             "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
         echo "        Done!" 
     fi
@@ -221,7 +221,7 @@ if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MO
     else
         # Optional: Download the precomputed cisTarget database
         echo "    Downloading precomputed cisTarget database: scores.feather file"
-        wget -q -O "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" \
+        curl -o -s -q "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" \
             "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
         echo "        Done!"
     fi
@@ -259,9 +259,9 @@ if [ "$STEP_03_GET_TSS_DATA" = true ]; then
     echo "Step 3: Getting Transcription Start Site data"
     pycistopic tss get_tss \
         --output "${QC_DIR}/tss.bed" \
-        --name "mmusculus_gene_ensembl" \
+        --name "hsapiens_gene_ensembl" \
         --to-chrom-source ucsc \
-        --ucsc mm10 > "${LOG_DIR}/Step 3: Getting Transcription Start Site data.log" 2>&1;
+        --ucsc hg38 > "${LOG_DIR}/Step 3: Getting Transcription Start Site data.log" 2>&1;
 fi
 
 ###############################################################################
