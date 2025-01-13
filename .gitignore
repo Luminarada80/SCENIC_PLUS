@@ -26,3 +26,6 @@ old_code/
 *.feather
 debugging/
 create_cisTarget_databases_original/
+mESC/
+out/
+ATAC_preprocessing_full_pipeline.py

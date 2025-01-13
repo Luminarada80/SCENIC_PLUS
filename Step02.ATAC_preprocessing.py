@@ -36,7 +36,6 @@ parser.add_argument("--tmp_dir", required=True,  help="path to the temporary dir
 parser.add_argument("--atac_file_name", required=True,  help="path to the ATAC data file")
 parser.add_argument("--mm10_blacklist", required=True,  help="path to the the pycisTopic mm10 blacklist bed file")
 
-
 # Parse arguments
 args = parser.parse_args()
 
@@ -47,7 +46,7 @@ atac_file_name = args.atac_file_name
 mm10_blacklist = args.mm10_blacklist
 
 chromsizes = pd.read_table(
-    'https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes',
+    'https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes',
     header = None,
     names = ["Chromosome", "End"]
 )
@@ -77,6 +76,14 @@ atac_data.fillna(0, inplace=True)
 # Extract regions from row names (assuming "chr:start-end" format)
 regions = atac_data.index.str.extract(r"(chr[^:]+):(\d+)-(\d+)")
 regions.columns = ["Chrom", "Start", "End"]
+
+# Handle missing values in extracted data
+regions["Start"] = pd.to_numeric(regions["Start"], errors="coerce")  # Convert to numeric
+regions["End"] = pd.to_numeric(regions["End"], errors="coerce")  # Convert to numeric
+
+# Drop rows with NaN in Start or End
+regions.dropna(subset=["Start", "End"], inplace=True)
+
 regions["Start"] = regions["Start"].astype(int)
 regions["End"] = regions["End"].astype(int)
 

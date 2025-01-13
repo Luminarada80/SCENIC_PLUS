@@ -12,11 +12,11 @@ input_data:
   region_set_folder: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/outs/region_sets"
 
   # Paths to motif ranking/score databases
-  ctx_db_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/input/mESC.regions_vs_motifs.rankings.feather"
-  dem_db_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/input/mESC.regions_vs_motifs.scores.feather"
+  ctx_db_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/input/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+  dem_db_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/input/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
 
   # Path to motif annotations
-  path_to_motif_annotations: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/input/motifs-v10-nr.mgi-m0.00001-o0.0.tbl"
+  path_to_motif_annotations: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/aertslab_motif_colleciton/v10nr_clust_public/snapshots/motifs-v10-nr.hgnc-m0.00001-o0.0.tbl"
 
 ###############################################################################
 # OUTPUT DATA PATHS
@@ -65,7 +65,7 @@ output_data:
 ###############################################################################
 params_general:
   temp_dir: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/tmp"
-  n_cpu: 1
+  n_cpu: 10
   seed: 666
 
 ###############################################################################
@@ -83,7 +83,7 @@ params_data_preparation:
   extended_annotation: "Orthology_annot"
 
   # Download_genome_annotations
-  species: "mmusculus"
+  species: "hsapiens"
   biomart_host: "http://www.ensembl.org"
 
   # Search_space
@@ -95,27 +95,27 @@ params_data_preparation:
 # MOTIF ENRICHMENT PARAMETERS
 ###############################################################################
 params_motif_enrichment:
-  species: "mus_musculus"
-  annotation_version: "v9-nr"
+  species: "homo_sapiens"
+  annotation_version: "v10nr_clust"
   motif_similarity_fdr: 0.001
   orthologous_identity_threshold: 0.0
   annotations_to_use: "Direct_annot Orthology_annot"
 
   # DEM parameters
-  fraction_overlap_w_dem_database: 0.2
-  dem_max_bg_regions: 1000
+  fraction_overlap_w_dem_database: 0.4
+  dem_max_bg_regions: 500
   dem_balance_number_of_promoters: True
-  dem_promoter_space: 500
-  dem_adj_pval_thr: 1
-  dem_log2fc_thr: 0.1
-  dem_mean_fg_thr: 0.005
-  dem_motif_hit_thr: 0.5
+  dem_promoter_space: 1000
+  dem_adj_pval_thr: 0.05
+  dem_log2fc_thr: 1.0
+  dem_mean_fg_thr: 0.0
+  dem_motif_hit_thr: 3.0
 
   # CisTarget parameters
-  fraction_overlap_w_ctx_database: 0.1
+  fraction_overlap_w_ctx_database: 0.4
   ctx_auc_threshold: 0.005
-  ctx_nes_threshold: 2.0
-  ctx_rank_threshold: 0.1
+  ctx_nes_threshold: 3.0
+  ctx_rank_threshold: 0.05
 
 ###############################################################################
 # INFERENCE PARAMETERS

@@ -6,8 +6,8 @@
 #SBATCH --job-name=SCENIC+
 #SBATCH -p compute
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=32G
+#SBATCH --cpus-per-task=10
+#SBATCH --mem-per-cpu=50G
 #SBATCH -o LOGS/scenic_plus_test.log
 #SBATCH -e LOGS/scenic_plus_test.err
 
@@ -33,12 +33,15 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=false
-STEP_02_ATAC_PREPROCESSING=false
-STEP_03_GET_TSS_DATA=false
-STEP_04_CREATE_FASTA=false
+STEP_01_RNA_PREPROCESSING=true
+STEP_02_ATAC_PREPROCESSING=true
+STEP_03_GET_TSS_DATA=true
+STEP_04_CREATE_FASTA=true
 STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+
+# Optional: Use precomputed cisTarget database
+USE_PRECOMPUTED_CISTARGET_DB=true
 
 ###############################################################################
 # PATH SETUP
@@ -54,13 +57,13 @@ QC_DIR="${OUTPUT_DIR}/qc"
 ###############################################################################
 # INPUT FILES & DIRECTORIES
 ###############################################################################
-CHROMSIZES="${INPUT_DIR}/mm10.chrom.sizes"
-GENOME_FASTA="${INPUT_DIR}/mm10.fa"
-RNA_FILE_NAME="multiomic_data_1000_cells_E7.5_rep1_RNA.csv"
-ATAC_FILE_NAME="multiomic_data_1000_cells_E7.5_rep1_ATAC.csv"
-MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
+CHROMSIZES="${INPUT_DIR}/hg38.chrom.sizes"
+GENOME_FASTA="${INPUT_DIR}/hg38.fa"
+RNA_FILE_NAME="K562_human_filtered_RNA.csv"
+ATAC_FILE_NAME="K562_human_filtered_ATAC.csv"
+MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/hg38-blacklist.v2.bed"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
-FASTA_FILE="${INPUT_DIR}/mm10.mESC.with_1kb_bg_padding.fa"
+FASTA_FILE="${INPUT_DIR}/hg38.K562.with_1kb_bg_padding.fa"
 
 echo "Input files:"
 echo "    RNA Data File: $RNA_FILE_NAME"
@@ -199,7 +202,34 @@ sed -i "s/^\(\s*n_cpu:\s*\).*/\1${NUM_CPU}/" "${CONFIG_FILE}"
 echo "Updated config.yaml with n_cpu: ${NUM_CPU}"
 echo ""
 
+# Download the precomputed cisTarget database
+if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = false ]; then
+
+    echo "Using pre-computed cisTarget database"
+    if [ -f "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" ]; then
+        echo "    Precomputed cisTarget hg38 regions_vs_motifs.rankings.feather file exists"
+    else
+        # Optional: Download the precomputed cisTarget database
+        echo "    Downloading precomputed cisTarget database: rankings.feather file"
+        wget -q -O "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" \
+            "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+        echo "        Done!" 
+    fi
+
+    if [ -f "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" ]; then
+        echo "    Precomputed cisTarget hg38 regions_vs_motifs.scores.feather file exists"
+    else
+        # Optional: Download the precomputed cisTarget database
+        echo "    Downloading precomputed cisTarget database: scores.feather file"
+        wget -q -O "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" \
+            "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
+        echo "        Done!"
+    fi
+    echo ""
+fi
+
 echo "Checks complete, starting pipeline"
+
 ###############################################################################
 # STEP 1: RNA PREPROCESSING
 ###############################################################################
@@ -265,8 +295,10 @@ if [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = true ]; then
         --max 1000 \
         -o "${OUTPUT_DIR}" \
         --bgpadding 1000 \
-        -t ${NUM_CPU};
+        -t "${NUM_CPU}"
 fi
+
+
 
 ###############################################################################
 # STEP 6: RUN SNAKEMAKE PIPELINE
