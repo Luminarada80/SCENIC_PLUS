@@ -16,6 +16,6 @@ subset_inferred_grn = pd.DataFrame(inferred_grn_data[["Source", "Target", "Score
 
 print(subset_inferred_grn.head())
 
-output_file_name = "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/outs/scenic_plus_inferred_grn_mESC.tsv"
+output_file_name = "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/outs/scenic_plus_inferred_grn_K562.tsv"
 
 subset_inferred_grn.to_csv(output_file_name, sep="\t", header=True, index=False)

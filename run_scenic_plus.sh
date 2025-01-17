@@ -8,8 +8,8 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem-per-cpu=50G
-#SBATCH -o LOGS/scenic_plus_test.log
-#SBATCH -e LOGS/scenic_plus_test.err
+#SBATCH -o LOGS/scenic_plus.log
+#SBATCH -e LOGS/scenic_plus.err
 
 ###############################################################################
 # ENVIRONMENT SETUP
@@ -206,25 +206,38 @@ echo ""
 if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = false ]; then
 
     echo "Using pre-computed cisTarget database"
+
+    # Ensure destination directory exists
+    mkdir -p "$INPUT_DIR"
+
+    # File: rankings.feather
     if [ -f "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" ]; then
         echo "    Precomputed cisTarget hg38 regions_vs_motifs.rankings.feather file exists"
     else
-        # Optional: Download the precomputed cisTarget database
-        echo "    Downloading precomputed cisTarget database: rankings.feather file"
-        curl -o -s -q  "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" \
+        echo "    Downloading rankings.feather file..."
+        curl -L -o "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" \
             "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
-        echo "        Done!" 
+        if [ $? -eq 0 ]; then
+            echo "        Done!"
+        else
+            echo "        Error: Failed to download rankings.feather file."
+        fi
     fi
 
+    # File: scores.feather
     if [ -f "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" ]; then
         echo "    Precomputed cisTarget hg38 regions_vs_motifs.scores.feather file exists"
     else
-        # Optional: Download the precomputed cisTarget database
-        echo "    Downloading precomputed cisTarget database: scores.feather file"
-        curl -o -s -q "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" \
+        echo "    Downloading scores.feather file..."
+        curl -L -o "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" \
             "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
-        echo "        Done!"
+        if [ $? -eq 0 ]; then
+            echo "        Done!"
+        else
+            echo "        Error: Failed to download scores.feather file."
+        fi
     fi
+
     echo ""
 fi
 
