@@ -42,13 +42,13 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=true
-STEP_02_ATAC_PREPROCESSING=true
-STEP_03_GET_TSS_DATA=true
-STEP_04_CREATE_FASTA=true
+STEP_01_RNA_PREPROCESSING=false
+STEP_02_ATAC_PREPROCESSING=false
+STEP_03_GET_TSS_DATA=false
+STEP_04_CREATE_FASTA=false
 
 # Optional: Use precomputed cisTarget database
-USE_PRECOMPUTED_CISTARGET_DB=true
+USE_PRECOMPUTED_CISTARGET_DB=false
 # Or create your own cisTarget motif database
 STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 
@@ -472,9 +472,10 @@ if [ "$STEP_07_FORMAT_INFERRED_GRN" = true ]; then
         echo "    File Found! Formatting..."
         run_python_step "Step 7: Format Inferred GRN" \
             "${SCRIPT_DIR}/Step07.format_inferred_grn.py" \
-                --output_dir "$OUTPUT_DIR" \
+                --output_dir "${SCRIPT_DIR}/formatted_inferred_GRNs" \
                 --inferred_grn_file "scplusmdata.h5mu" \
-                --cell_type "$CELL_TYPE"
+                --cell_type "$CELL_TYPE" \
+                --sample_name "$SAMPLE_NAMe"
         echo "    DONE! Formatted GRN saved as 'scenic_plus_inferred_grn_${CELL_TYPE}.tsv'"
     else
         echo "    ERROR! formatting inferred GRN 'scplusmdata.h5mu': File not found in the output directory"

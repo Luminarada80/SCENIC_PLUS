@@ -26,6 +26,12 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Cell type analyzed, used for naming the output file"
     )
+    parser.add_argument(
+        "--sample_name",
+        type=str,
+        required=True,
+        help="Name of the sample being processed"
+    )
 
     args = parser.parse_args()
     
@@ -36,6 +42,7 @@ def main():
     output_dir = args.output_dir
     inferred_grn_file = args.inferred_grn_file
     cell_type = args.cell_type
+    sample_name = args.sample_name
 
     inferred_grn = mudata.read(f'{output_dir}/{inferred_grn_file}')
 
@@ -47,7 +54,7 @@ def main():
 
     subset_inferred_grn = pd.DataFrame(inferred_grn_data[["Source", "Target", "Score"]])
 
-    output_file_name = f"{output_dir}/scenic_plus_inferred_grn_{cell_type}.tsv"
+    output_file_name = f"{output_dir}/scenic_plus_inferred_grn_{cell_type}_{sample_name}.tsv"
 
     subset_inferred_grn.to_csv(output_file_name, sep="\t", header=True, index=False)
 
