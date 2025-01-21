@@ -29,3 +29,6 @@ create_cisTarget_databases_original/
 mESC/
 out/
 ATAC_preprocessing_full_pipeline.py
+organism_genome_files/*
+*_outs/
+K562/

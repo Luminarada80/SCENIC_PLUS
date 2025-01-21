@@ -3,28 +3,37 @@
 ###############################################################################
 # SLURM DIRECTIVES
 ###############################################################################
-#SBATCH --job-name=SCENIC+
+#SBATCH --job-name="SCENIC+_${CELL_TYPE}_${SAMPLE_NAME}"
 #SBATCH -p compute
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=10
-#SBATCH --mem-per-cpu=50G
-#SBATCH -o LOGS/scenic_plus.log
-#SBATCH -e LOGS/scenic_plus.err
+#SBATCH --cpus-per-task=5
+#SBATCH --mem-per-cpu=32G
 
 ###############################################################################
 # ENVIRONMENT SETUP
 ###############################################################################
-set -e
+set -euo pipefail
+trap "echo 'An error occurred. Exiting...'; exit 1;" ERR
 
 conda activate scenicplus
-cd /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS
+SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS"
+cd "${SCRIPT_DIR}"
 
 echo "Python executable: $(which python)"
 echo ""
 
 # Add the local pycisTopic to the python path so it is recognized as a module
-export PYTHONPATH="${PYTHONPATH}:/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/pycisTopic/src"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/miniconda3/lib
+if [ -z "${PYTHONPATH+x}" ]; then
+    export PYTHONPATH="${SCRIPT_DIR}/pycisTopic/src"
+else
+    export PYTHONPATH="${PYTHONPATH}:${SCRIPT_DIR}/pycisTopic/src"
+fi
+
+if [ -z "${LD_LIBRARY_PATH+x}" ]; then
+    export LD_LIBRARY_PATH="$HOME/miniconda3/lib"
+else
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$HOME/miniconda3/lib"
+fi
 
 NUM_CPU=${SLURM_CPUS_PER_TASK}
 echo "Number of CPUs allocated: ${NUM_CPU}"
@@ -33,42 +42,78 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=false
-STEP_02_ATAC_PREPROCESSING=false
-STEP_03_GET_TSS_DATA=false
-STEP_04_CREATE_FASTA=false
-STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
-STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+STEP_01_RNA_PREPROCESSING=true
+STEP_02_ATAC_PREPROCESSING=true
+STEP_03_GET_TSS_DATA=true
+STEP_04_CREATE_FASTA=true
 
 # Optional: Use precomputed cisTarget database
 USE_PRECOMPUTED_CISTARGET_DB=true
+# Or create your own cisTarget motif database
+STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
+
+STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+STEP_07_FORMAT_INFERRED_GRN=true
 
 ###############################################################################
 # PATH SETUP
 ###############################################################################
-LOG_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/LOGS"
-SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS"
-CISTARGET_SCRIPT_DIR="${SCRIPT_DIR}/create_cisTarget_databases"
-TEMP_DIR="${SCRIPT_DIR}/tmp"
-INPUT_DIR="${SCRIPT_DIR}/input"
-OUTPUT_DIR="${SCRIPT_DIR}/outs"
-QC_DIR="${OUTPUT_DIR}/qc"
+
 
 ###############################################################################
 # INPUT FILES & DIRECTORIES
 ###############################################################################
-CHROMSIZES="${INPUT_DIR}/hg38.chrom.sizes"
-GENOME_FASTA="${INPUT_DIR}/hg38.fa"
-RNA_FILE_NAME="K562_human_filtered_RNA.csv"
-ATAC_FILE_NAME="K562_human_filtered_ATAC.csv"
-MM10_BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/hg38-blacklist.v2.bed"
+LOG_DIR="${SCRIPT_DIR}/LOGS/${CELL_TYPE}_logs/${SAMPLE_NAME}_logs/"
+
+INPUT_DIR="${SCRIPT_DIR}/input/${CELL_TYPE}/${SAMPLE_NAME}"
+OUTPUT_DIR="${SCRIPT_DIR}/${CELL_TYPE}_${SAMPLE_NAME}_outs"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
-FASTA_FILE="${INPUT_DIR}/hg38.K562.with_1kb_bg_padding.fa"
+CISTARGET_SCRIPT_DIR="${SCRIPT_DIR}/create_cisTarget_databases"
+TEMP_DIR="${SCRIPT_DIR}/tmp"
+QC_DIR="${OUTPUT_DIR}/qc"
+MOTIF_DATABASE_DIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/snapshots"
+
+if [ $SPECIES == "human" ]; then
+    ORGANISM_DIR="${SCRIPT_DIR}/organism_genome_files/human"
+    ENSEMBL_SPECIES="hsapiens"
+    MOTIF_ENRICHMENT_SPECIES="homo_sapiens"
+    PYCISTOPIC_SPECIES="hsapiens_gene_ensembl"
+    PYCISTOPIC_SPECIES_CODE="hg38"
+    ANNOTATION_VERSION="v10nr_clust"
+    CHROMSIZES="${ORGANISM_DIR}/hg38.chrom.sizes"
+    GENOME_FASTA="${ORGANISM_DIR}/hg38.fa"
+    FASTA_FILE="${INPUT_DIR}/hg38.${CELL_TYPE}.with_1kb_bg_padding.fa"
+    MOTIF_ANNOT_FILE="${MOTIF_DATABASE_DIR}/motifs-v10-nr.hgnc-m0.00001-o0.0.tbl"
+    CISTARGET_RANKINGS_PRECOMP="hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+    CISTARGET_SCORES_PRECOMP="hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
+    BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/hg38-blacklist.v2.bed"
+fi
+
+if [ $SPECIES == "mouse" ]; then
+    ORGANISM_DIR="${SCRIPT_DIR}/organism_genome_files/mouse"
+    ENSEMBL_SPECIES="mmusculus"
+    MOTIF_ENRICHMENT_SPECIES="mus_musculus"
+    PYCISTOPIC_SPECIES="mmusculus_gene_ensembl"
+    PYCISTOPIC_SPECIES_CODE="mm10"
+    ANNOTATION_VERSION="v9-nr"
+    CHROMSIZES="${ORGANISM_DIR}/mm10.chrom.sizes"
+    GENOME_FASTA="${ORGANISM_DIR}/mm10.fa"
+    FASTA_FILE="${INPUT_DIR}/mm10.${CELL_TYPE}.with_1kb_bg_padding.fa"
+    MOTIF_ANNOT_FILE="${MOTIF_DATABASE_DIR}/motifs-v10-nr.mgi-m0.00001-o0.0.tbl"
+    CISTARGET_RANKINGS_PRECOMP="mm10_screen_v10_clust.regions_vs_motifs.rankings.feather"
+    CISTARGET_SCORES_PRECOMP="mm10_screen_v10_clust.regions_vs_motifs.scores.feather"
+    BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
+fi
+
+
 
 echo "Input files:"
 echo "    RNA Data File: $RNA_FILE_NAME"
 echo "    ATAC Data File: $ATAC_FILE_NAME"
 echo "    Genome FASTA File: $GENOME_FASTA"
+echo "    Cell Type: $CELL_TYPE"
+echo "    Sample: $SAMPLE_NAME"
+echo "    Species: $SPECIES"
 echo ""
 
 ###############################################################################
@@ -79,7 +124,7 @@ run_python_step() {
     script_path=$2
     shift 2  # Remove the first two arguments
     echo "Running ${step_name}..."
-    /usr/bin/time -v /gpfs/Home/esm5360/miniconda3/envs/scenicplus/bin/python \
+    /usr/bin/time -v python3 \
         "${script_path}" "$@" \
         2> "${LOG_DIR}/${step_name}.log"
 }
@@ -120,6 +165,42 @@ check_dir_exists() {
     fi
 }
 
+generate_config() {
+    python3 update_config_yaml.py \
+    --cisTopic_obj_fname "${OUTPUT_DIR}/cistopic_obj.pkl" \
+    --GEX_anndata_fname "${OUTPUT_DIR}/adata_final.h5ad" \
+    --region_set_folder "${OUTPUT_DIR}/region_sets" \
+    --ctx_db_fname "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" \
+    --dem_db_fname "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" \
+    --path_to_motif_annotations "${MOTIF_ANNOT_FILE}" \
+    --combined_GEX_ACC_mudata "${OUTPUT_DIR}/ACC_GEX.h5mu" \
+    --dem_result_fname "${OUTPUT_DIR}/dem_results.hdf5" \
+    --ctx_result_fname "${OUTPUT_DIR}/ctx_results.hdf5" \
+    --output_fname_dem_html "${OUTPUT_DIR}/dem_results.html" \
+    --output_fname_ctx_html "${OUTPUT_DIR}/ctx_results.html" \
+    --cistromes_direct "${OUTPUT_DIR}/cistromes_direct.h5ad" \
+    --cistromes_extended "${OUTPUT_DIR}/cistromes_extended.h5ad" \
+    --tf_names "${OUTPUT_DIR}/tf_names.txt" \
+    --genome_annotation "${OUTPUT_DIR}/genome_annotation.tsv" \
+    --chromsizes "${OUTPUT_DIR}/chromsizes.tsv" \
+    --search_space "${OUTPUT_DIR}/search_space.tsv" \
+    --tf_to_gene_adjacencies "${OUTPUT_DIR}/tf_to_gene_adj.tsv" \
+    --region_to_gene_adjacencies "${OUTPUT_DIR}/region_to_gene_adj.tsv" \
+    --eRegulons_direct "${OUTPUT_DIR}/eRegulons_direct.tsv" \
+    --eRegulons_extended "${OUTPUT_DIR}/eRegulons_extended.tsv" \
+    --AUCell_direct "${OUTPUT_DIR}/AUCell_direct.h5mu" \
+    --AUCell_extended "${OUTPUT_DIR}/AUCell_extended.h5mu" \
+    --scplus_mdata "${OUTPUT_DIR}/scplusmdata.h5mu" \
+    --temp_dir "${SCRIPT_DIR}/tmp" \
+    --n_cpu "${NUM_CPU}" \
+    --seed 666 \
+    --ensembl_species "${ENSEMBL_SPECIES}" \
+    --motif_enrichment_species "${MOTIF_ENRICHMENT_SPECIES}" \
+    --annotation_version "${ANNOTATION_VERSION}" \
+    --output_config_path "${SCRIPT_DIR}/scplus_pipeline/Snakemake/config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
+}
+
+
 ###############################################################################
 # CHECK PATHS AND DEPENDENCIES
 ###############################################################################
@@ -132,7 +213,7 @@ check_dir_exists "$SCRIPT_DIR"
 # Check required files
 check_file_exists "$INPUT_DIR/$ATAC_FILE_NAME"
 check_file_exists "$INPUT_DIR/$RNA_FILE_NAME"
-check_file_exists "$MM10_BLACKLIST"
+check_file_exists "$BLACKLIST"
 check_file_exists "$GENOME_FASTA"
 
 # Check to see if SCENIC+ generated directories exist or create them
@@ -140,6 +221,9 @@ check_or_create_dir "$LOG_DIR"
 check_or_create_dir "$OUTPUT_DIR"
 check_or_create_dir "$TEMP_DIR"
 check_or_create_dir "$QC_DIR"
+
+# Generate the config file for the cell type and sample
+generate_config
 
 echo "    All required files and directories found"
 echo ""
@@ -196,11 +280,11 @@ else
 fi
 echo ""
 
-# Update the n_cpu value in the config.yaml file
-CONFIG_FILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/config/config.yaml"
-sed -i "s/^\(\s*n_cpu:\s*\).*/\1${NUM_CPU}/" "${CONFIG_FILE}"
-echo "Updated config.yaml with n_cpu: ${NUM_CPU}"
-echo ""
+# # Update the n_cpu value in the config.yaml file
+# CONFIG_FILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/config/config.yaml"
+# sed -i "s/^\(\s*n_cpu:\s*\).*/\1${NUM_CPU}/" "${CONFIG_FILE}"
+# echo "Updated config.yaml with n_cpu: ${NUM_CPU}"
+# echo ""
 
 # Download the precomputed cisTarget database
 if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = false ]; then
@@ -211,12 +295,19 @@ if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MO
     mkdir -p "$INPUT_DIR"
 
     # File: rankings.feather
-    if [ -f "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" ]; then
-        echo "    Precomputed cisTarget hg38 regions_vs_motifs.rankings.feather file exists"
+    if [ -f "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" ]; then
+        echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.rankings.feather file exists"
     else
         echo "    Downloading rankings.feather file..."
-        curl -L -o "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather" \
-            "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+        if [ "$ORGANISM" == "human" ]; then
+            RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+        
+        elif [ "$ORGANISM" == "mouse" ]; then
+            RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather"
+
+        fi
+        curl -L -o "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" \
+            "${RANKINGS_FEATHER_LINK}"
         if [ $? -eq 0 ]; then
             echo "        Done!"
         else
@@ -225,12 +316,19 @@ if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MO
     fi
 
     # File: scores.feather
-    if [ -f "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" ]; then
-        echo "    Precomputed cisTarget hg38 regions_vs_motifs.scores.feather file exists"
+    if [ -f "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" ]; then
+        echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.scores.feather file exists"
     else
         echo "    Downloading scores.feather file..."
-        curl -L -o "$INPUT_DIR/hg38_screen_v10_clust.regions_vs_motifs.scores.feather" \
-            "https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
+        if [ "$ORGANISM" == "human" ]; then
+            SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
+        
+        elif [ "$ORGANISM" == "mouse" ]; then
+            SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.scores.feather"
+        fi
+
+        curl -L -o "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" \
+            "${SCORES_FEATHER_LINK}"
         if [ $? -eq 0 ]; then
             echo "        Done!"
         else
@@ -262,7 +360,8 @@ if [ "$STEP_02_ATAC_PREPROCESSING" = true ]; then
         --output_dir "${OUTPUT_DIR}" \
         --tmp_dir "${TEMP_DIR}" \
         --atac_file_name "${ATAC_FILE_NAME}" \
-        --mm10_blacklist "${MM10_BLACKLIST}";
+        --blacklist "${BLACKLIST}" \
+        --chromsize_file_path "${CHROMSIZES}";
 fi
 
 ###############################################################################
@@ -272,9 +371,9 @@ if [ "$STEP_03_GET_TSS_DATA" = true ]; then
     echo "Step 3: Getting Transcription Start Site data"
     pycistopic tss get_tss \
         --output "${QC_DIR}/tss.bed" \
-        --name "hsapiens_gene_ensembl" \
+        --name "${PYCISTOPIC_SPECIES}" \
         --to-chrom-source ucsc \
-        --ucsc hg38 > "${LOG_DIR}/Step 3: Getting Transcription Start Site data.log" 2>&1;
+        --ucsc "${PYCISTOPIC_SPECIES_CODE}" > "${LOG_DIR}/Step 3: Getting Transcription Start Site data.log" 2>&1;
 fi
 
 ###############################################################################
@@ -349,6 +448,35 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
 
     echo "    Running snakemake"
 
+    # Define the Snakefile and target config path
+    SNAKEFILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/workflow/Snakefile"
+    NEW_CONFIG_PATH="config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
+
+    # Update the configfile line in the Snakefile
+    sed -i "s|^\s*configfile:.*|configfile: \"${NEW_CONFIG_PATH}\"|" "${SNAKEFILE}"
+
+    # Print confirmation
+    echo "Updated Snakefile with configfile: ${NEW_CONFIG_PATH}"
+    echo "    Variable value: '$(grep 'configfile' "${SNAKEFILE}")'"
+    echo ""
+
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
     snakemake --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
+    echo "Done!"
+    echo ""
+fi
+
+if [ "$STEP_07_FORMAT_INFERRED_GRN" = true ]; then
+    echo "Step 7: Format SCENIC+ inferred GRN (scplusmdata.h5mu)"
+    if [ -f "$OUTPUT_DIR/scplusmdata.h5mu" ]; then
+        echo "    File Found! Formatting..."
+        run_python_step "Step 7: Format Inferred GRN" \
+            "${SCRIPT_DIR}/Step07.format_inferred_grn.py" \
+                --output_dir "$OUTPUT_DIR" \
+                --inferred_grn_file "scplusmdata.h5mu" \
+                --cell_type "$CELL_TYPE"
+        echo "    DONE! Formatted GRN saved as 'scenic_plus_inferred_grn_${CELL_TYPE}.tsv'"
+    else
+        echo "    ERROR! formatting inferred GRN 'scplusmdata.h5mu': File not found in the output directory"
+    fi
 fi

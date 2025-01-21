@@ -1,0 +1,73 @@
+input_data:
+  cisTopic_obj_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/cistopic_obj.pkl"
+  GEX_anndata_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/adata_final.h5ad"
+  region_set_folder: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/region_sets"
+  ctx_db_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/organism_genome_files/mouse/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather"
+  dem_db_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/organism_genome_files/mouse/mm10_screen_v10_clust.regions_vs_motifs.scores.feather"
+  path_to_motif_annotations: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/aertslab_motif_colleciton/v10nr_clust_public/snapshots/motifs-v10-nr.mgi-m0.00001-o0.0.tbl"
+output_data:
+  combined_GEX_ACC_mudata: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/ACC_GEX.h5mu"
+  dem_result_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/dem_results.hdf5"
+  ctx_result_fname: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/ctx_results.hdf5"
+  output_fname_dem_html: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/dem_results.html"
+  output_fname_ctx_html: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/ctx_results.html"
+  cistromes_direct: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/cistromes_direct.h5ad"
+  cistromes_extended: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/cistromes_extended.h5ad"
+  tf_names: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/tf_names.txt"
+  genome_annotation: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/genome_annotation.tsv"
+  chromsizes: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/chromsizes.tsv"
+  search_space: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/search_space.tsv"
+  tf_to_gene_adjacencies: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/tf_to_gene_adj.tsv"
+  region_to_gene_adjacencies: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/region_to_gene_adj.tsv"
+  eRegulons_direct: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/eRegulons_direct.tsv"
+  eRegulons_extended: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/eRegulons_extended.tsv"
+  AUCell_direct: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/AUCell_direct.h5mu"
+  AUCell_extended: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/AUCell_extended.h5mu"
+  scplus_mdata: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/mESC_1000_cells_E7.5_rep1_outs/scplusmdata.h5mu"
+params_general:
+  temp_dir: "/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/tmp"
+  n_cpu: 5
+  seed: 666
+params_data_preparation:
+  bc_transform_func: "\"lambda x: f'{x}'\""
+  is_multiome: true
+  key_to_group_by: ""
+  nr_cells_per_metacells: 10
+  direct_annotation: "Direct_annot"
+  extended_annotation: "Ortholoty_annot"
+  species: "mmusculus"
+  biomart_host: "http://www.ensembl.org"
+  search_space_upstream: "1000 5000"
+  search_space_downstream: "1000 5000"
+  search_space_extend_tss: "10 10"
+params_motif_enrichment:
+  species: "mus_musculus"
+  annotation_version: "v9-nr"
+  motif_similarity_fdr: 0.001
+  orthologous_identity_threshold: 0.0
+  annotations_to_use: "Direct_annot Orthology_annot"
+  fraction_overlap_w_dem_database: 0.4
+  dem_max_bg_regions: 500
+  dem_balance_number_of_promoters: true
+  dem_promoter_space: 1000
+  dem_adj_pval_thr: 0.05
+  dem_log2fc_thr: 1.0
+  dem_mean_fg_thr: 0.0
+  dem_motif_hit_thr: 3.0
+  fraction_overlap_w_ctx_database: 0.4
+  ctx_auc_threshold: 0.005
+  ctx_nes_threshold: 3.0
+  ctx_rank_threshold: 0.05
+params_inference:
+  tf_to_gene_importance_method: "GBM"
+  region_to_gene_importance_method: "GBM"
+  region_to_gene_correlation_method: "SR"
+  order_regions_to_genes_by: "importance"
+  order_TFs_to_genes_by: "importance"
+  gsea_n_perm: 1000
+  quantile_thresholds_region_to_gene: "0.85 0.90 0.95"
+  top_n_regionTogenes_per_gene: "5 10 15"
+  top_n_regionTogenes_per_region: ""
+  min_regions_per_gene: 0
+  rho_threshold: 0.05
+  min_target_genes: 10

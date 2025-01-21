@@ -34,7 +34,8 @@ parser.add_argument("--input_dir", required=True, help="Path to the data input d
 parser.add_argument("--output_dir", required=True, help="path to the output directory")
 parser.add_argument("--tmp_dir", required=True,  help="path to the temporary directory")
 parser.add_argument("--atac_file_name", required=True,  help="path to the ATAC data file")
-parser.add_argument("--mm10_blacklist", required=True,  help="path to the the pycisTopic mm10 blacklist bed file")
+parser.add_argument("--blacklist", required=True,  help="path to the the pycisTopic organism blacklist bed file")
+parser.add_argument("--chromsize_file_path", required=True, help="Path to the chromosome size file for the organism")
 
 # Parse arguments
 args = parser.parse_args()
@@ -43,10 +44,11 @@ input_dir = args.input_dir
 output_dir = args.output_dir
 tmp_dir = args.tmp_dir
 atac_file_name = args.atac_file_name
-mm10_blacklist = args.mm10_blacklist
+blacklist = args.blacklist
+chromsize_file_path = args.chromsize_file_path
 
 chromsizes = pd.read_table(
-    'https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes',
+    chromsize_file_path,
     header = None,
     names = ["Chromosome", "End"]
 )
@@ -120,7 +122,7 @@ print(f'Saved consensus_regions.bed to {output_dir}')
 logging.info(f'\tCreating cistopic_obj from csv file')
 cistopic_obj = create_cistopic_object(
     fragment_matrix=atac_data,
-    path_to_blacklist=mm10_blacklist,
+    path_to_blacklist=blacklist,
 )
 
 # Inspect the cisTopic object
