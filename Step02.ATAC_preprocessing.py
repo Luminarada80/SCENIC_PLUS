@@ -89,6 +89,10 @@ regions["End"] = pd.to_numeric(regions["End"], errors="coerce")
 # Drop rows with NaN in Start or End
 valid_indices = regions.dropna(subset=["Start", "End"]).index
 
+valid_indices = regions.index.intersection(atac_data.index)
+regions = regions.loc[valid_indices]
+atac_data = atac_data.loc[valid_indices]
+
 # Debug: Log invalid indices
 invalid_indices = set(atac_data.index) - set(valid_indices)
 logging.info(f"Invalid indices removed: {len(invalid_indices)}")
@@ -116,7 +120,9 @@ if not os.path.exists(f'{output_dir}/consensus_peak_calling/'):
 
 # Save to BED format
 regions[["Chrom", "Start", "End", "Score"]].to_csv(f'{output_dir}/consensus_peak_calling/consensus_regions.bed', sep="\t", header=False, index=False)
-print(f'Saved consensus_regions.bed to {output_dir}')
+logging.info(f'Saved consensus_regions.bed to {output_dir}')
+
+logging.info(f"Number of regions before filtering: {regions.shape[0]}")
 
 # Create the cisTopic object
 logging.info(f'\tCreating cistopic_obj from csv file')

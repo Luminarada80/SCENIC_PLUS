@@ -42,13 +42,13 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=false
-STEP_02_ATAC_PREPROCESSING=false
-STEP_03_GET_TSS_DATA=false
-STEP_04_CREATE_FASTA=false
+STEP_01_RNA_PREPROCESSING=true
+STEP_02_ATAC_PREPROCESSING=true
+STEP_03_GET_TSS_DATA=true
+STEP_04_CREATE_FASTA=true
 
 # Optional: Use precomputed cisTarget database
-USE_PRECOMPUTED_CISTARGET_DB=false
+USE_PRECOMPUTED_CISTARGET_DB=true
 # Or create your own cisTarget motif database
 STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 
@@ -66,7 +66,7 @@ STEP_07_FORMAT_INFERRED_GRN=true
 LOG_DIR="${SCRIPT_DIR}/LOGS/${CELL_TYPE}_logs/${SAMPLE_NAME}_logs/"
 
 INPUT_DIR="${SCRIPT_DIR}/input/${CELL_TYPE}/${SAMPLE_NAME}"
-OUTPUT_DIR="${SCRIPT_DIR}/${CELL_TYPE}_${SAMPLE_NAME}_outs"
+OUTPUT_DIR="${SCRIPT_DIR}/output/${CELL_TYPE}_${SAMPLE_NAME}_outs"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
 CISTARGET_SCRIPT_DIR="${SCRIPT_DIR}/create_cisTarget_databases"
 TEMP_DIR="${SCRIPT_DIR}/tmp"
@@ -182,7 +182,7 @@ generate_config() {
     --cistromes_extended "${OUTPUT_DIR}/cistromes_extended.h5ad" \
     --tf_names "${OUTPUT_DIR}/tf_names.txt" \
     --genome_annotation "${OUTPUT_DIR}/genome_annotation.tsv" \
-    --chromsizes "${OUTPUT_DIR}/chromsizes.tsv" \
+    --chromsizes "${CHROMSIZES}" \
     --search_space "${OUTPUT_DIR}/search_space.tsv" \
     --tf_to_gene_adjacencies "${OUTPUT_DIR}/tf_to_gene_adj.tsv" \
     --region_to_gene_adjacencies "${OUTPUT_DIR}/region_to_gene_adj.tsv" \

@@ -22,7 +22,7 @@ submit_run_scenic_plus_job() {
 run_macrophage() {
     local CELL_TYPE="macrophage"
     local SAMPLE_NAMES=(
-        # "macrophage_buffer1_filtered"
+        "macrophage_buffer1_filtered"
         # "macrophage_buffer2_filtered"
         # "macrophage_buffer3_filtered"
         # "macrophage_buffer4_filtered"
@@ -86,29 +86,29 @@ run_macrophage() {
 run_mESC(){
     local CELL_TYPE="mESC"
     local SAMPLE_NAMES=(
-        "1000_cells_E7.5_rep1"
+        # "1000_cells_E7.5_rep1" # failed, found no eRegulons
         # "1000_cells_E7.5_rep2"
         # "1000_cells_E7.75_rep1"
         # "1000_cells_E8.0_rep1"
         # "1000_cells_E8.0_rep2"
         # "1000_cells_E8.5_CRISPR_T_KO"
         # "1000_cells_E8.5_CRISPR_T_WT"
-        # "2000_cells_E7.5_rep1"
+        "2000_cells_E7.5_rep1"
         # "2000_cells_E8.0_rep1"
         # "2000_cells_E8.0_rep2"
         # "2000_cells_E8.5_CRISPR_T_KO"
         # "2000_cells_E8.5_CRISPR_T_WT"
-        # "3000_cells_E7.5_rep1"
+        "3000_cells_E7.5_rep1"
         # "3000_cells_E8.0_rep1"
         # "3000_cells_E8.0_rep2"
         # "3000_cells_E8.5_CRISPR_T_KO"
         # "3000_cells_E8.5_CRISPR_T_WT"
-        # "4000_cells_E7.5_rep1"
+        "4000_cells_E7.5_rep1"
         # "4000_cells_E8.0_rep1"
         # "4000_cells_E8.0_rep2"
         # "4000_cells_E8.5_CRISPR_T_KO"
         # "4000_cells_E8.5_CRISPR_T_WT"
-        # "5000_cells_E7.5_rep1"
+        "5000_cells_E7.5_rep1"
         # "5000_cells_E8.5_CRISPR_T_KO"
         # "70_percent_subsampled_1"
         # "70_percent_subsampled_2"
@@ -120,7 +120,7 @@ run_mESC(){
         # "70_percent_subsampled_8"
         # "70_percent_subsampled_9"
         # "70_percent_subsampled_10"
-        # "filtered_L2_E7.5_rep1"
+        "filtered_L2_E7.5_rep1"
         # "filtered_L2_E7.5_rep2"
         # "filtered_L2_E7.75_rep1"
         # "filtered_L2_E8.0_rep1"
@@ -172,5 +172,5 @@ run_K562(){
 }
 
 
-run_macrophage
+# run_macrophage
 run_mESC
