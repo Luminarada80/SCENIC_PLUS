@@ -69,7 +69,7 @@ INPUT_DIR="${SCRIPT_DIR}/input/${CELL_TYPE}/${SAMPLE_NAME}"
 OUTPUT_DIR="${SCRIPT_DIR}/output/${CELL_TYPE}_${SAMPLE_NAME}_outs"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
 CISTARGET_SCRIPT_DIR="${SCRIPT_DIR}/create_cisTarget_databases"
-TEMP_DIR="${SCRIPT_DIR}/tmp"
+TEMP_DIR="${SCRIPT_DIR}/tmp/${CELL_TYPE}_${SAMPLE_NAME}_tmp"
 QC_DIR="${OUTPUT_DIR}/qc"
 MOTIF_DATABASE_DIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/snapshots"
 

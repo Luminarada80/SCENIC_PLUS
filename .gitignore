@@ -34,3 +34,4 @@ organism_genome_files/mouse/*
 *_outs/
 K562/
 *_config.yaml
+*tmp

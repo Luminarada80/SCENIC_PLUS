@@ -82,6 +82,10 @@ regions.columns = ["Chrom", "Start", "End"]
 logging.info(f"Initial atac_data shape: {atac_data.shape}")
 logging.info(f"Initial regions shape: {regions.shape}")
 
+nonzero_cells = (atac_data.sum(axis=0) > 0)
+logging.info(f"Number of non-zero coverage cells: {nonzero_cells.sum()} / {atac_data.shape[1]}")
+atac_data = atac_data.loc[:, nonzero_cells]
+
 # Handle missing values in extracted data
 regions["Start"] = pd.to_numeric(regions["Start"], errors="coerce")
 regions["End"] = pd.to_numeric(regions["End"], errors="coerce")
@@ -131,6 +135,8 @@ cistopic_obj = create_cistopic_object(
     path_to_blacklist=blacklist,
 )
 
+logging.info(f"Created cistopic_obj with n_cells × n_regions = {cistopic_obj.fragment_matrix.shape}")
+
 # Inspect the cisTopic object
 logging.info(f'\t{cistopic_obj}')
 
@@ -147,7 +153,6 @@ os.environ['MALLET_MEMORY'] = '200G'
 mallet_path="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/scenicplus/Mallet-202108/bin/mallet"
 
 # n_topics=[2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
-
 # Run models
 models=run_cgs_models_mallet(
     cistopic_obj,
