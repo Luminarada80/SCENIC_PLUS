@@ -42,15 +42,15 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=true
-STEP_02_ATAC_PREPROCESSING=true
-STEP_03_GET_TSS_DATA=true
-STEP_04_CREATE_FASTA=true
+STEP_01_RNA_PREPROCESSING=false
+STEP_02_ATAC_PREPROCESSING=false
+STEP_03_GET_TSS_DATA=false
+STEP_04_CREATE_FASTA=false
 
 # Optional: Use precomputed cisTarget database
 USE_PRECOMPUTED_CISTARGET_DB=true
-# Or create your own cisTarget motif database
-STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=true
+# # Or create your own cisTarget motif database
+# STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 
 STEP_06_RUN_SNAKEMAKE_PIPELINE=true
 STEP_07_FORMAT_INFERRED_GRN=true
@@ -119,6 +119,26 @@ echo ""
 ###############################################################################
 # FUNCTION DEFINITIONS
 ###############################################################################
+check_if_running() {
+    echo ""
+    echo "Checking for SCENIC+ jobs running for the current sample..."
+    # Use the SLURM job name for comparison
+    JOB_NAME="${SLURM_JOB_NAME}"  # Dynamically retrieve the job name from SLURM
+
+    # Check for running jobs with the same name, excluding the current job
+    RUNNING_COUNT=$(squeue --name="$JOB_NAME" --noheader | wc -l)
+
+    # If other SCENIC+ jobs are running and there are lock files, exit
+    if [ "$RUNNING_COUNT" -gt 1 ]; then
+        echo "    A job with the name '"$JOB_NAME"' is already running:"
+        echo "    Exiting to avoid conflicts."
+        exit 1
+    else
+        echo "    No jobs already running"
+    fi
+    echo ""
+}
+
 run_python_step() {
     step_name=$1
     script_path=$2
@@ -205,6 +225,8 @@ generate_config() {
 # CHECK PATHS AND DEPENDENCIES
 ###############################################################################
 
+check_if_running
+
 echo "Checking for all required directories and files"
 # Check required directories
 check_dir_exists "$CISTARGET_SCRIPT_DIR"
@@ -287,7 +309,7 @@ echo ""
 # echo ""
 
 # Download the precomputed cisTarget database
-if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ] && [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = false ]; then
+if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ]; then
 
     echo "Using pre-computed cisTarget database"
 
@@ -391,26 +413,24 @@ if [ "$STEP_04_CREATE_FASTA" = true ]; then
         yes;
 fi
 
-###############################################################################
-# STEP 5: CREATE CISTARGET MOTIF DATABASES
-###############################################################################
-if [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = true ]; then
-    CBDIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/singletons"
-    MOTIF_LIST="${INPUT_DIR}/motifs.txt"
+# ###############################################################################
+# # STEP 5: CREATE CISTARGET MOTIF DATABASES
+# ###############################################################################
+# if [ "$STEP_05_CREATE_CISTARGET_MOTIF_DATABASES" = true ]; then
+#     CBDIR="${SCRIPT_DIR}/aertslab_motif_colleciton/v10nr_clust_public/singletons"
+#     MOTIF_LIST="${INPUT_DIR}/motifs.txt"
 
-    run_python_step "Step 5: Create cistarget databases" \
-        "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
-        -f "${FASTA_FILE}" \
-        -M "${CBDIR}" \
-        -m "${MOTIF_LIST}" \
-        --min 5 \
-        --max 1000 \
-        -o "${OUTPUT_DIR}" \
-        --bgpadding 1000 \
-        -t "${NUM_CPU}"
-fi
-
-
+#     run_python_step "Step 5: Create cistarget databases" \
+#         "${CISTARGET_SCRIPT_DIR}/create_cistarget_motif_databases.py" \
+#         -f "${FASTA_FILE}" \
+#         -M "${CBDIR}" \
+#         -m "${MOTIF_LIST}" \
+#         --min 5 \
+#         --max 1000 \
+#         -o "${OUTPUT_DIR}" \
+#         --bgpadding 1000 \
+#         -t "${NUM_CPU}"
+# fi
 
 ###############################################################################
 # STEP 6: RUN SNAKEMAKE PIPELINE
@@ -444,12 +464,12 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
         # If other SCENIC+ jobs are running and there are lock files, exit
         if [ "$RUNNING_COUNT" -gt 1 ]; then
             echo "    A job with the name '"$JOB_NAME"' is already running:"
-            echo "    Exiting to avoid conflicts."
+            echo "        Exiting to avoid conflicts."
             exit 1
         
         # If no other SCENIC+ jobs are running and there are lock files, remove them
         else
-            echo "    No other jobs with the name '"$JOB_NAME"', removing locks"
+            echo "        No other jobs with the name '"$JOB_NAME"', removing locks"
             rm -rf "$LOCK_FILE/*"
         fi
         
@@ -459,7 +479,6 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
 
     echo "    Running snakemake"
 
-    snakemake --unlock
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
     snakemake --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
     echo "Done!"
