@@ -86,7 +86,7 @@ run_macrophage() {
 run_mESC(){
     local CELL_TYPE="mESC"
     local SAMPLE_NAMES=(
-        # "1000_cells_E7.5_rep1" # failed, found no eRegulons
+        "1000_cells_E7.5_rep1" # failed, found no eRegulons
         # "1000_cells_E7.5_rep2"
         # "1000_cells_E7.75_rep1"
         # "1000_cells_E8.0_rep1"

@@ -42,18 +42,18 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=false
-STEP_02_ATAC_PREPROCESSING=false
-STEP_03_GET_TSS_DATA=false
+STEP_01_RNA_PREPROCESSING=true
+STEP_02_ATAC_PREPROCESSING=true
+STEP_03_GET_TSS_DATA=true
 STEP_04_CREATE_FASTA=true
 
 # Optional: Use precomputed cisTarget database
-USE_PRECOMPUTED_CISTARGET_DB=false
+USE_PRECOMPUTED_CISTARGET_DB=true
 # Or create your own cisTarget motif database
-STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
+STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=true
 
-STEP_06_RUN_SNAKEMAKE_PIPELINE=false
-STEP_07_FORMAT_INFERRED_GRN=false
+STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+STEP_07_FORMAT_INFERRED_GRN=true
 
 ###############################################################################
 # PATH SETUP
@@ -417,7 +417,18 @@ fi
 ###############################################################################
 if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     echo "Step 6: Run SCENIC+ snakemake"
-    
+
+        # Define the Snakefile and target config path
+    SNAKEFILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/workflow/Snakefile"
+    NEW_CONFIG_PATH="config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
+
+    # Update the configfile line in the Snakefile
+    sed -i "s|^\s*configfile:.*|configfile: \"${NEW_CONFIG_PATH}\"|" "${SNAKEFILE}"
+
+    # Print confirmation
+    echo "Updated Snakefile with configfile: ${NEW_CONFIG_PATH}"
+    echo "    Variable value: '$(grep 'configfile' "${SNAKEFILE}")'"
+    echo ""
 
     # Check for Snakemake lock files
     LOCK_FILE="$SCRIPT_DIR/scplus_pipeline/Snakemake/.snakemake/locks"
@@ -439,7 +450,7 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
         # If no other SCENIC+ jobs are running and there are lock files, remove them
         else
             echo "    No other jobs with the name '"$JOB_NAME"', removing locks"
-            rm -rf "$LOCK_FILE"
+            rm -rf "$LOCK_FILE/*"
         fi
         
     else
@@ -448,18 +459,7 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
 
     echo "    Running snakemake"
 
-    # Define the Snakefile and target config path
-    SNAKEFILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/workflow/Snakefile"
-    NEW_CONFIG_PATH="config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
-
-    # Update the configfile line in the Snakefile
-    sed -i "s|^\s*configfile:.*|configfile: \"${NEW_CONFIG_PATH}\"|" "${SNAKEFILE}"
-
-    # Print confirmation
-    echo "Updated Snakefile with configfile: ${NEW_CONFIG_PATH}"
-    echo "    Variable value: '$(grep 'configfile' "${SNAKEFILE}")'"
-    echo ""
-
+    snakemake --unlock
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
     snakemake --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
     echo "Done!"
