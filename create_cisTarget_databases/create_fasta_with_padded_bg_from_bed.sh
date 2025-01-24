@@ -51,7 +51,6 @@ create_fasta_with_padded_bg_from_bed () {
     if [ "${create_name}" = "yes" ] ; then
         create_name=1;
     fi
-
     bedtools slop \
         -i "${bed_regions_filename}" \
         -g "${chrom_sizes_filename}" \
