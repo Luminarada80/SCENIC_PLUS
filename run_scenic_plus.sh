@@ -480,7 +480,7 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     echo "    Running snakemake"
 
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
-    snakemake --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
+    snakemake --nolock --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
     echo "Done!"
     echo ""
 fi

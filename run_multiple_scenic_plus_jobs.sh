@@ -146,6 +146,9 @@ run_mESC(){
             "$SPECIES" \
             "$RNA_FILE_NAME" \
             "$ATAC_FILE_NAME"
+
+        # Give each one time to get started so there aren't race conditions
+
     done
 }
 
@@ -171,6 +174,6 @@ run_K562(){
     done
 }
 
-
+# run_K562
 # run_macrophage
 run_mESC
