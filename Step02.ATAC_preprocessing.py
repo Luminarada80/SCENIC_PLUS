@@ -55,6 +55,7 @@ chromsizes = pd.read_table(
 chromsizes.insert(1, "Start", 0)
 
 chromsizes.to_csv(f'{output_dir}/chromsizes.tsv', index=False, sep='\t')
+logging.info(chromsizes.head())
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -112,10 +113,10 @@ logging.info(regions.head())
 if not os.path.exists(f'{output_dir}/consensus_peak_calling/'):
     os.makedirs(f'{output_dir}/consensus_peak_calling/')
 print(f'Regions (consensus_regions.bed):')
-print(regions[["Chrom", "Start", "End", "Score"]].head())
+print(regions[["Chrom", "Start", "End"]].head())
 
 # Save to BED format
-regions[["Chrom", "Start", "End", "Score"]].to_csv(f'{output_dir}/consensus_peak_calling/consensus_regions.bed', sep="\t", header=False, index=False)
+regions[["Chrom", "Start", "End"]].to_csv(f'{output_dir}/consensus_peak_calling/consensus_regions.bed', sep="\t", header=False, index=False)
 logging.info(f'Saved consensus_regions.bed to {output_dir}')
 
 logging.info(f"Number of regions before filtering: {regions.shape[0]}")

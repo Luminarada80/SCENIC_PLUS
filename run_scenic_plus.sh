@@ -48,7 +48,7 @@ STEP_03_GET_TSS_DATA=false
 STEP_04_CREATE_FASTA=false
 
 # Optional: Use precomputed cisTarget database
-USE_PRECOMPUTED_CISTARGET_DB=true
+USE_PRECOMPUTED_CISTARGET_DB=false
 # # Or create your own cisTarget motif database
 # STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 
@@ -95,7 +95,7 @@ if [ $SPECIES == "mouse" ]; then
     MOTIF_ENRICHMENT_SPECIES="mus_musculus"
     PYCISTOPIC_SPECIES="mmusculus_gene_ensembl"
     PYCISTOPIC_SPECIES_CODE="mm10"
-    ANNOTATION_VERSION="v9-nr"
+    ANNOTATION_VERSION="v10nr_clust"
     CHROMSIZES="${ORGANISM_DIR}/mm10.chrom.sizes"
     GENOME_FASTA="${ORGANISM_DIR}/mm10.fa"
     FASTA_FILE="${INPUT_DIR}/mm10.${CELL_TYPE}.with_1kb_bg_padding.fa"
@@ -202,7 +202,7 @@ generate_config() {
     --cistromes_extended "${OUTPUT_DIR}/cistromes_extended.h5ad" \
     --tf_names "${OUTPUT_DIR}/tf_names.txt" \
     --genome_annotation "${OUTPUT_DIR}/genome_annotation.tsv" \
-    --chromsizes "${CHROMSIZES}" \
+    --chromsizes "${OUTPUT_DIR}/chromsizes.tsv" \
     --search_space "${OUTPUT_DIR}/search_space.tsv" \
     --tf_to_gene_adjacencies "${OUTPUT_DIR}/tf_to_gene_adj.tsv" \
     --region_to_gene_adjacencies "${OUTPUT_DIR}/region_to_gene_adj.tsv" \
@@ -442,13 +442,13 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     SNAKEFILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/workflow/Snakefile"
     NEW_CONFIG_PATH="config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
 
-    # Update the configfile line in the Snakefile
-    sed -i "s|^\s*configfile:.*|configfile: \"${NEW_CONFIG_PATH}\"|" "${SNAKEFILE}"
+    # # Update the configfile line in the Snakefile
+    # sed -i "s|^\s*configfile:.*|configfile: \"${NEW_CONFIG_PATH}\"|" "${SNAKEFILE}"
 
-    # Print confirmation
-    echo "Updated Snakefile with configfile: ${NEW_CONFIG_PATH}"
-    echo "    Variable value: '$(grep 'configfile' "${SNAKEFILE}")'"
-    echo ""
+    # # Print confirmation
+    # echo "Updated Snakefile with configfile: ${NEW_CONFIG_PATH}"
+    # echo "    Variable value: '$(grep 'configfile' "${SNAKEFILE}")'"
+    # echo ""
 
     # Check for Snakemake lock files
     LOCK_FILE="$SCRIPT_DIR/scplus_pipeline/Snakemake/.snakemake/locks"
@@ -470,7 +470,8 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
         # If no other SCENIC+ jobs are running and there are lock files, remove them
         else
             echo "        No other jobs with the name '"$JOB_NAME"', removing locks"
-            rm -rf "$LOCK_FILE/*"
+            cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
+            snakemake --unlock --snakefile $SNAKEFILE --configfile $NEW_CONFIG_PATH
         fi
         
     else
@@ -480,7 +481,14 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     echo "    Running snakemake"
 
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
-    snakemake --nolock --cores ${NUM_CPU} --latency-wait 600 > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
+    snakemake \
+        --nolock \
+        --cores ${NUM_CPU} \
+        --snakefile $SNAKEFILE \
+        --latency-wait 600 \
+        --configfile $NEW_CONFIG_PATH \
+        > "${LOG_DIR}/Step 6: Snakemake.log" 2>&1;
+
     echo "Done!"
     echo ""
 fi
