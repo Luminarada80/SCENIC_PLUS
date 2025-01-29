@@ -44,7 +44,7 @@ def main():
     cell_type = args.cell_type
     sample_name = args.sample_name
 
-    inferred_grn = mudata.read(f'{output_dir}/{inferred_grn_file}')
+    inferred_grn = mudata.read(inferred_grn_file)
 
     inferred_grn_data = inferred_grn.uns["direct_e_regulon_metadata"]
 

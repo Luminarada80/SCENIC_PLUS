@@ -52,7 +52,7 @@ USE_PRECOMPUTED_CISTARGET_DB=false
 # # Or create your own cisTarget motif database
 # STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 
-STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+STEP_06_RUN_SNAKEMAKE_PIPELINE=false
 STEP_07_FORMAT_INFERRED_GRN=true
 
 ###############################################################################
@@ -451,32 +451,33 @@ if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     # echo ""
 
     # Check for Snakemake lock files
-    LOCK_FILE="$SCRIPT_DIR/scplus_pipeline/Snakemake/.snakemake/locks"
-    if [ -d "$LOCK_FILE" ]; then
-        echo "    Lock files detected at $LOCK_FILE"
+    # LOCK_FILE="$SCRIPT_DIR/scplus_pipeline/Snakemake/.snakemake/locks"
+    # if [ -d "$LOCK_FILE" ]; then
+    #     echo "    Lock files detected at $LOCK_FILE"
 
-        # Use the SLURM job name for comparison
-        JOB_NAME="${SLURM_JOB_NAME}"  # Dynamically retrieve the job name from SLURM
+    #     # Use the SLURM job name for comparison
+    #     JOB_NAME="${SLURM_JOB_NAME}"  # Dynamically retrieve the job name from SLURM
 
-        # Check for running jobs with the same name, excluding the current job
-        RUNNING_COUNT=$(squeue --name="$JOB_NAME" --noheader | wc -l)
+    #     # Check for running jobs with the same name, excluding the current job
+    #     RUNNING_COUNT=$(squeue --name="$JOB_NAME" --noheader | wc -l)
 
-        # If other SCENIC+ jobs are running and there are lock files, exit
-        if [ "$RUNNING_COUNT" -gt 1 ]; then
-            echo "    A job with the name '"$JOB_NAME"' is already running:"
-            echo "        Exiting to avoid conflicts."
-            exit 1
-        
-        # If no other SCENIC+ jobs are running and there are lock files, remove them
-        else
-            echo "        No other jobs with the name '"$JOB_NAME"', removing locks"
-            cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
-            snakemake --unlock --snakefile $SNAKEFILE --configfile $NEW_CONFIG_PATH
-        fi
-        
-    else
-        echo "    No lock files detected."
+    # If other SCENIC+ jobs are running and there are lock files, exit
+    if [ "$RUNNING_COUNT" -gt 1 ]; then
+        echo "    A job with the name '"$JOB_NAME"' is already running:"
+        echo "        Exiting to avoid conflicts."
+        exit 1
     fi
+        
+    #     # If no other SCENIC+ jobs are running and there are lock files, remove them
+    #     else
+    #         echo "        No other jobs with the name '"$JOB_NAME"', removing locks"
+    #         cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
+    #         snakemake --unlock --snakefile $SNAKEFILE --configfile $NEW_CONFIG_PATH
+    #     fi
+        
+    # else
+    #     echo "    No lock files detected."
+    # fi
 
     echo "    Running snakemake"
 
@@ -500,9 +501,9 @@ if [ "$STEP_07_FORMAT_INFERRED_GRN" = true ]; then
         run_python_step "Step 7: Format Inferred GRN" \
             "${SCRIPT_DIR}/Step07.format_inferred_grn.py" \
                 --output_dir "${SCRIPT_DIR}/formatted_inferred_GRNs" \
-                --inferred_grn_file "scplusmdata.h5mu" \
+                --inferred_grn_file "${OUTPUT_DIR}/scplusmdata.h5mu" \
                 --cell_type "$CELL_TYPE" \
-                --sample_name "$SAMPLE_NAMe"
+                --sample_name "$SAMPLE_NAME"
         echo "    DONE! Formatted GRN saved as 'scenic_plus_inferred_grn_${CELL_TYPE}.tsv'"
     else
         echo "    ERROR! formatting inferred GRN 'scplusmdata.h5mu': File not found in the output directory"

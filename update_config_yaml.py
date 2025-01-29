@@ -91,7 +91,7 @@ new_config = {
         "key_to_group_by": DoubleQuotedScalarString(""),
         "nr_cells_per_metacells": 10,
         "direct_annotation": DoubleQuotedScalarString("Direct_annot"),
-        "extended_annotation": DoubleQuotedScalarString("Ortholoty_annot"),
+        "extended_annotation": DoubleQuotedScalarString("Orthology_annot"),
         "species": DoubleQuotedScalarString(args.ensembl_species),
         "biomart_host": DoubleQuotedScalarString("http://www.ensembl.org"),
         "search_space_upstream": DoubleQuotedScalarString("1000 5000"),
