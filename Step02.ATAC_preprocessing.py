@@ -75,7 +75,10 @@ atac_data = atac_data.apply(pd.to_numeric, errors='coerce')
 atac_data.fillna(0, inplace=True)
 
 # Extract regions from row names (assuming "chr:start-end" format)
-regions = atac_data.index.to_series().str.extract(r"(chr[^:]+):(\d+)-(\d+)")
+regions = atac_data.index.to_series().str.extract(r"^([^:]+):(\d+)-(\d+)$")
+
+regions.dropna(inplace=True)
+
 regions.columns = ["Chrom", "Start", "End"]
 
 # Debug: Check indices and shape
