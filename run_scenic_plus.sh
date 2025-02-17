@@ -42,13 +42,13 @@ echo ""
 ###############################################################################
 # DECIDE WHICH STEPS TO RUN
 ###############################################################################
-STEP_01_RNA_PREPROCESSING=true
-STEP_02_ATAC_PREPROCESSING=true
-STEP_03_GET_TSS_DATA=true
-STEP_04_CREATE_FASTA=true
+STEP_01_RNA_PREPROCESSING=false
+STEP_02_ATAC_PREPROCESSING=false
+STEP_03_GET_TSS_DATA=false
+STEP_04_CREATE_FASTA=false
 
 # Optional: Use precomputed cisTarget database
-USE_PRECOMPUTED_CISTARGET_DB=true
+USE_PRECOMPUTED_CISTARGET_DB=false
 # # Or create your own cisTarget motif database
 # STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
 
