@@ -109,15 +109,15 @@ new_config = {
         "dem_max_bg_regions": 500,
         "dem_balance_number_of_promoters": True,
         "dem_promoter_space": 1000,
-        "dem_adj_pval_thr": 1.00,
-        "dem_log2fc_thr": 0.01,
+        "dem_adj_pval_thr": 0.75,
+        "dem_log2fc_thr": 0.5,
         "dem_mean_fg_thr": 0.0,
-        "dem_motif_hit_thr": 0.01,
+        "dem_motif_hit_thr": 1.00,
         # CisTarget parameters
         "fraction_overlap_w_ctx_database": 0.4,
         "ctx_auc_threshold": 0.01,
         "ctx_nes_threshold": 0.01,
-        "ctx_rank_threshold": 0.01,
+        "ctx_rank_threshold": 0.02,
     },
     "params_inference": {
         "tf_to_gene_importance_method": DoubleQuotedScalarString("GBM"),
@@ -131,7 +131,7 @@ new_config = {
         "top_n_regionTogenes_per_region": DoubleQuotedScalarString(""),
         "min_regions_per_gene": 0,
         "rho_threshold": 0.05,
-        "min_target_genes": 1,
+        "min_target_genes": 5,
     },
 }
 
