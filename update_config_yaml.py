@@ -109,7 +109,7 @@ new_config = {
         "dem_max_bg_regions": 500,
         "dem_balance_number_of_promoters": True,
         "dem_promoter_space": 1000,
-        "dem_adj_pval_thr": 0.75,
+        "dem_adj_pval_thr": 0.50,
         "dem_log2fc_thr": 0.5,
         "dem_mean_fg_thr": 0.0,
         "dem_motif_hit_thr": 1.00,

@@ -7,7 +7,7 @@
 #SBATCH -p compute
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=5
-#SBATCH --mem-per-cpu=32G
+#SBATCH --mem-per-cpu=64G
 
 ###############################################################################
 # ENVIRONMENT SETUP
