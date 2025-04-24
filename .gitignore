@@ -34,3 +34,6 @@ organism_genome_files/mouse/*
 K562/
 *_config.yaml
 *tmp
+build
+src/scenicplus.egg-info/
+scenicplus/

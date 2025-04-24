@@ -162,8 +162,12 @@ activate_conda_env() {
         echo "[ERROR] Conda environment '$CONDA_ENV_NAME' does not exist."
         echo "   - Attempting to create $CONDA_ENV_NAME environment..."
         # redirect both stdout and stderr into create_env.err
-        conda create --name "$CONDA_ENV_NAME" python=3.11 -y\
-        > "${LOG_DIR}/create_conda_env.out" 2> "${LOG_DIR}/create_conda_env.out"
+        {
+        conda create --name "$CONDA_ENV_NAME" python=3.11.8 -y 
+        conda activate "$CONDA_ENV_NAME"
+        pip install "pip<24.1" 
+        pip install ${SCRIPT_DIR}
+        } > "${LOG_DIR}/create_conda_env.out" 2> "${LOG_DIR}/create_conda_env.out"
         if [[ $? -ne 0 ]]; then
             echo "[ERROR] Failed to create Conda environment, see ${LOG_DIR}/create_env.err for details."
             exit 1
@@ -178,18 +182,21 @@ activate_conda_env() {
 install_scenic_plus() {
     echo ""
     echo "[INFO] Checking that scenicplus is installed"
-    local repo_dir="${SCRIPT_DIR}/scenicplus"
+    local repo_dir="${SCRIPT_DIR}/src/scenicplus"
     local logf="${LOG_DIR}/install_scenic_plus.log"
 
-    if [[ ! -d "$repo_dir" ]]; then
-        echo "    - scenicplus directory not found, installing..."
+    python3 -c "import scenicplus" 2>/dev/null
+    local is_installed=$?
+
+    if [[ $is_installed -ne 0 || ! -d "$repo_dir" ]]; then
+        echo "    - scenicplus not found in Python or directory missing, installing..."
         mkdir -p "$(dirname "$logf")"
 
         {
             echo "---- Cloning scenicplus ----"
             git clone https://github.com/Luminarada80/scenicplus_src.git "$repo_dir"
-            echo "---- Installing scenicplus (editable mode) ----"
-            pip install -e "$repo_dir"
+            echo "---- Installing scenicplus ----"
+            pip install "${SCRIPT_DIR}"
         } > "$logf" 2>&1
 
         if [[ $? -ne 0 ]]; then
@@ -199,7 +206,7 @@ install_scenic_plus() {
             echo "    - scenicplus installed; logs in $logf"
         fi
     else
-        echo "    - scenicplus directory exists"
+        echo "    - scenicplus is already installed and directory exists"
     fi
 }
 
@@ -360,7 +367,7 @@ check_clusterbuster(){
         if [ ! -f "${SCRIPT_DIR}/cbust" ]; then
             echo "    cbust not downloaded, downloading..."
             # Download cluster-buster (cbust)
-            wget -nv https://resources.aertslab.org/cistarget/programs/cbust -O "${SCRIPT_DIR}/cbust"
+            wget -q https://resources.aertslab.org/cistarget/programs/cbust -O "${SCRIPT_DIR}/cbust"
 
         else
             echo "        - 'cbust' file found, adding to PATH..."
@@ -397,7 +404,7 @@ check_aertslab_motif_collection() {
             mkdir -p "${MOTIF_DIR}"
 
             echo "    - Downloading to ${MOTIF_ZIP}"
-            wget -nv -O "${MOTIF_ZIP}" "${MOTIF_URL}"
+            wget -q -O "${MOTIF_ZIP}" "${MOTIF_URL}"
 
             echo "    - Extracting archive"
             unzip -q "${MOTIF_ZIP}" -d "${MOTIF_DIR}"
