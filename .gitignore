@@ -1,6 +1,5 @@
 *.err
 *.log
-scenicplus/
 pycisTopic/
 *.csv
 *.txt

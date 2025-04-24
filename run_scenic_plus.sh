@@ -162,7 +162,7 @@ activate_conda_env() {
         echo "[ERROR] Conda environment '$CONDA_ENV_NAME' does not exist."
         echo "   - Attempting to create $CONDA_ENV_NAME environment..."
         # redirect both stdout and stderr into create_env.err
-        conda create --name "$CONDA_ENV_NAME" python=3.11 -y -f "${SCRIPT_DIR}/requirements.txt" \
+        conda create --name "$CONDA_ENV_NAME" python=3.11 -y\
         > "${LOG_DIR}/create_conda_env.out" 2> "${LOG_DIR}/create_conda_env.out"
         if [[ $? -ne 0 ]]; then
             echo "[ERROR] Failed to create Conda environment, see ${LOG_DIR}/create_env.err for details."
@@ -540,10 +540,11 @@ cd "${SCRIPT_DIR}"
 check_if_running
 determine_num_cpus
 activate_conda_env
-check_python_deps 
+
 install_scenic_plus
 install_pycistopic
 add_pycistopic_to_path
+check_python_deps 
 
 echo ""
 echo "[INFO] Checking required directories and files"
