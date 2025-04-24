@@ -162,7 +162,7 @@ activate_conda_env() {
         echo "[ERROR] Conda environment '$CONDA_ENV_NAME' does not exist."
         echo "   - Attempting to create $CONDA_ENV_NAME environment..."
         # redirect both stdout and stderr into create_env.err
-        conda create --name "$CONDA_ENV_NAME" python=3.11 -y \
+        conda create --name "$CONDA_ENV_NAME" python=3.11 -y -f "${SCRIPT_DIR}/requirements.txt" \
         > "${LOG_DIR}/create_conda_env.out" 2> "${LOG_DIR}/create_conda_env.out"
         if [[ $? -ne 0 ]]; then
             echo "[ERROR] Failed to create Conda environment, see ${LOG_DIR}/create_env.err for details."
@@ -282,7 +282,7 @@ EOF
 check_python_deps() {
     echo ""
     echo "[INFO] Checking python package requirements"
-    local pkgs=(ruamel.yaml requests numpy pandas)
+    local pkgs=(ruamel.yaml requests numpy pandas scanpy mudata)
     for p in "${pkgs[@]}"; do
         ensure_python_pkg "$p"
     done

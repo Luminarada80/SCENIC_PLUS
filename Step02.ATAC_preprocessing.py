@@ -1,17 +1,12 @@
-import pycisTopic
 import pandas as pd
 import numpy as np
 import os
 import pickle
-import joblib
-import subprocess
-from scipy.sparse import csr_matrix
 import matplotlib.pyplot as plt
-from pycisTopic.topic_qc import compute_topic_metrics, plot_topic_qc, topic_annotation
+from pycisTopic.topic_qc import compute_topic_metrics, plot_topic_qc
 from pycisTopic.utils import fig2img
 from pycisTopic.cistopic_class import create_cistopic_object
 from pycisTopic.lda_models import run_cgs_models_mallet
-from pycisTopic.iterative_peak_calling import get_consensus_peaks
 from pycisTopic.lda_models import evaluate_models
 from pycisTopic.topic_binarization import binarize_topics
 from pycisTopic.utils import region_names_to_coordinates
@@ -19,7 +14,6 @@ from pycisTopic.diff_features import (
     impute_accessibility,
     normalize_scores,
     find_highly_variable_features,
-    find_diff_features
 )
 
 import logging

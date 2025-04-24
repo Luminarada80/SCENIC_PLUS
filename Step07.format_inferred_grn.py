@@ -1,4 +1,3 @@
-import os
 import mudata
 import pandas as pd
 import argparse
