@@ -1,15 +1,9 @@
 #!/bin/bash -l
-
-# ------------ CHANGE THESE VARIABLES -----------
-CONDA_ENV_NAME="test_scenicplus"
-
-SAMPLE_NAME="filtered_L2_E7.5_rep1"
-CELL_TYPE="mESC"
-SPECIES="mouse"
-RNA_FILE_NAME="multiomic_data_filtered_L2_E7.5_rep1_RNA.csv"
-ATAC_FILE_NAME="multiomic_data_filtered_L2_E7.5_rep1_ATAC.csv"
-INPUT_DIR="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/LINGER/LINGER_MESC_SC_DATA/FULL_MESC_SAMPLES/${SAMPLE_NAME}"
-SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/TEST_SCENIC_PLUS"
+#SBATCH --job-name="SCENIC+_${CELL_TYPE}_${SAMPLE_NAME}"
+#SBATCH -p compute
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=5
+#SBATCH --mem-per-cpu=64G
 
 # DECIDE WHICH STEPS TO RUN
 STEP_01_RNA_PREPROCESSING=true
@@ -25,17 +19,13 @@ USE_PRECOMPUTED_CISTARGET_DB=true
 STEP_06_RUN_SNAKEMAKE_PIPELINE=true
 
 STEP_07_FORMAT_INFERRED_GRN=true
-# -------------------------------------------------
 
-export SAMPLE_NAME CELL_TYPE  
-###############################################################################
-# SLURM DIRECTIVES
-###############################################################################
-#SBATCH --job-name="SCENIC+_${CELL_TYPE}_${SAMPLE_NAME}"
-#SBATCH -p compute
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=5
-#SBATCH --mem-per-cpu=64G
+# ----------- CHANGE THESE VARIABLES --------------
+CONDA_ENV_NAME="test_scenicplus"
+INPUT_DIR="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/LINGER/LINGER_MESC_SC_DATA/FULL_MESC_SAMPLES/${SAMPLE_NAME}"
+SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/TEST_SCENIC_PLUS"
+
+# -------------------------------------------------
 
 ###############################################################################
 # ENVIRONMENT SETUP

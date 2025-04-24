@@ -1,5 +1,7 @@
 #!/bin/bash -l
 
+SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS"
+
 submit_run_scenic_plus_job() {
     local SAMPLE_NAME=$1
     local CELL_TYPE=$2
@@ -16,7 +18,7 @@ submit_run_scenic_plus_job() {
         --output="LOGS/${CELL_TYPE}_logs/${SAMPLE_NAME}_logs/scenic_plus_${CELL_TYPE}_${SAMPLE_NAME}.out" \
         --error="LOGS/${CELL_TYPE}_logs/${SAMPLE_NAME}_logs/scenic_plus_${CELL_TYPE}_${SAMPLE_NAME}.err" \
         --job-name="SCENIC+_${CELL_TYPE}_${SAMPLE_NAME}" \
-        /gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS/run_scenic_plus.sh
+        "${SCRIPT_DIR}/run_scenic_plus.sh"
 }
 
 run_macrophage() {
@@ -97,16 +99,16 @@ run_mESC(){
     # 70_percent_subsampled_9_E7.5_rep1
     # 70_percent_subsampled_10_E7.5_rep1
 
-    70_percent_subsampled_1_E7.5_rep2
-    70_percent_subsampled_2_E7.5_rep2
-    70_percent_subsampled_3_E7.5_rep2
-    70_percent_subsampled_4_E7.5_rep2
-    70_percent_subsampled_5_E7.5_rep2
-    70_percent_subsampled_6_E7.5_rep2
-    70_percent_subsampled_7_E7.5_rep2
-    70_percent_subsampled_8_E7.5_rep2
-    70_percent_subsampled_9_E7.5_rep2
-    70_percent_subsampled_10_E7.5_rep2
+    # 70_percent_subsampled_1_E7.5_rep2
+    # 70_percent_subsampled_2_E7.5_rep2
+    # 70_percent_subsampled_3_E7.5_rep2
+    # 70_percent_subsampled_4_E7.5_rep2
+    # 70_percent_subsampled_5_E7.5_rep2
+    # 70_percent_subsampled_6_E7.5_rep2
+    # 70_percent_subsampled_7_E7.5_rep2
+    # 70_percent_subsampled_8_E7.5_rep2
+    # 70_percent_subsampled_9_E7.5_rep2
+    # 70_percent_subsampled_10_E7.5_rep2
 
     # 70_percent_subsampled_1_E8.5_rep1
     # 70_percent_subsampled_2_E8.5_rep1
@@ -181,7 +183,7 @@ run_mESC(){
     # "5000_cells_E8.5_rep1"
     # "5000_cells_E8.5_rep2"
 
-    ## "filtered_L2_E7.5_rep1"
+    "filtered_L2_E7.5_rep1"
     ## "filtered_L2_E7.5_rep2"
     ## "filtered_L2_E7.75_rep1"
     ## "filtered_L2_E8.0_rep1"
@@ -197,8 +199,8 @@ run_mESC(){
     # Submit each SAMPLE_NAME as a separate job
     for SAMPLE_NAME in "${SAMPLE_NAMES[@]}"; do
 
-        local RNA_FILE_NAME="${SAMPLE_NAME%_E*}_RNA.csv"
-        local ATAC_FILE_NAME="${SAMPLE_NAME%_E*}_ATAC.csv"
+        local RNA_FILE_NAME="multiomic_data_${SAMPLE_NAME}_RNA.csv"
+        local ATAC_FILE_NAME="multiomic_data_${SAMPLE_NAME}_ATAC.csv"
 
         # Submit the job for each sample
         submit_run_scenic_plus_job \
