@@ -158,4 +158,4 @@ for key, value in new_config.items():
 with open(args.output_config_path, 'w') as config_file:
     yaml.dump(existing_config, config_file)
 
-print(f"Config file written to {args.output_config_path}")
+print(f"\n[INFO] Config file written to {args.output_config_path}")
