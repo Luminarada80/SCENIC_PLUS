@@ -1,5 +1,33 @@
 #!/bin/bash -l
 
+# ------------ CHANGE THESE VARIABLES -----------
+CONDA_ENV_NAME="test_scenicplus"
+
+SAMPLE_NAME="filtered_L2_E7.5_rep1"
+CELL_TYPE="mESC"
+SPECIES="mouse"
+RNA_FILE_NAME="multiomic_data_filtered_L2_E7.5_rep1_RNA.csv"
+ATAC_FILE_NAME="multiomic_data_filtered_L2_E7.5_rep1_ATAC.csv"
+INPUT_DIR="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/LINGER/LINGER_MESC_SC_DATA/FULL_MESC_SAMPLES/${SAMPLE_NAME}"
+SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/TEST_SCENIC_PLUS"
+
+# DECIDE WHICH STEPS TO RUN
+STEP_01_RNA_PREPROCESSING=true
+
+STEP_02_ATAC_PREPROCESSING=true
+
+STEP_03_GET_TSS_DATA=true
+
+STEP_04_CREATE_FASTA=true
+
+USE_PRECOMPUTED_CISTARGET_DB=true
+
+STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+
+STEP_07_FORMAT_INFERRED_GRN=true
+# -------------------------------------------------
+
+export SAMPLE_NAME CELL_TYPE  
 ###############################################################################
 # SLURM DIRECTIVES
 ###############################################################################
@@ -15,57 +43,11 @@
 set -euo pipefail
 trap "echo 'An error occurred. Exiting...'; exit 1;" ERR
 
-conda activate scenicplus
-SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/SCENIC_PLUS"
-cd "${SCRIPT_DIR}"
-
-echo "Python executable: $(which python)"
-echo ""
-
-# Add the local pycisTopic to the python path so it is recognized as a module
-if [ -z "${PYTHONPATH+x}" ]; then
-    export PYTHONPATH="${SCRIPT_DIR}/pycisTopic/src"
-else
-    export PYTHONPATH="${PYTHONPATH}:${SCRIPT_DIR}/pycisTopic/src"
-fi
-
-if [ -z "${LD_LIBRARY_PATH+x}" ]; then
-    export LD_LIBRARY_PATH="$HOME/miniconda3/lib"
-else
-    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$HOME/miniconda3/lib"
-fi
-
-NUM_CPU=${SLURM_CPUS_PER_TASK}
-echo "Number of CPUs allocated: ${NUM_CPU}"
-echo ""
-
-###############################################################################
-# DECIDE WHICH STEPS TO RUN
-###############################################################################
-STEP_01_RNA_PREPROCESSING=false
-STEP_02_ATAC_PREPROCESSING=false
-STEP_03_GET_TSS_DATA=false
-STEP_04_CREATE_FASTA=false
-
-# Optional: Use precomputed cisTarget database
-USE_PRECOMPUTED_CISTARGET_DB=false
-# # Or create your own cisTarget motif database
-# STEP_05_CREATE_CISTARGET_MOTIF_DATABASES=false
-
-STEP_06_RUN_SNAKEMAKE_PIPELINE=true
-STEP_07_FORMAT_INFERRED_GRN=true
-
-###############################################################################
-# PATH SETUP
-###############################################################################
-
-
 ###############################################################################
 # INPUT FILES & DIRECTORIES
 ###############################################################################
-LOG_DIR="${SCRIPT_DIR}/LOGS/${CELL_TYPE}_logs/${SAMPLE_NAME}_logs/"
 
-INPUT_DIR="${SCRIPT_DIR}/input/${CELL_TYPE}/${SAMPLE_NAME}"
+LOG_DIR="${SCRIPT_DIR}/LOGS/${CELL_TYPE}_logs/${SAMPLE_NAME}_logs/"
 OUTPUT_DIR="${SCRIPT_DIR}/output/${CELL_TYPE}_${SAMPLE_NAME}_outs"
 REGION_BED="${OUTPUT_DIR}/consensus_peak_calling/consensus_regions.bed"
 CISTARGET_SCRIPT_DIR="${SCRIPT_DIR}/create_cisTarget_databases"
@@ -105,8 +87,6 @@ if [ $SPECIES == "mouse" ]; then
     BLACKLIST="${SCRIPT_DIR}/pycisTopic/blacklist/mm10-blacklist.v2.bed"
 fi
 
-
-
 echo "Input files:"
 echo "    RNA Data File: $RNA_FILE_NAME"
 echo "    ATAC Data File: $ATAC_FILE_NAME"
@@ -121,7 +101,7 @@ echo ""
 ###############################################################################
 check_if_running() {
     echo ""
-    echo "Checking for SCENIC+ jobs running for the current sample..."
+    echo "[INFO] Checking for SCENIC+ jobs running for the current sample..."
     # Use the SLURM job name for comparison
     JOB_NAME="${SLURM_JOB_NAME}"  # Dynamically retrieve the job name from SLURM
 
@@ -130,13 +110,37 @@ check_if_running() {
 
     # If other SCENIC+ jobs are running and there are lock files, exit
     if [ "$RUNNING_COUNT" -gt 1 ]; then
-        echo "    A job with the name '"$JOB_NAME"' is already running:"
+        echo ""
+        echo "[WARNING] A job with the name '"$JOB_NAME"' is already running:"
         echo "    Exiting to avoid conflicts."
         exit 1
     else
-        echo "    No jobs already running"
+        echo "    - No jobs with the same name running, continuing"
     fi
     echo ""
+}
+
+determine_num_cpus() {
+    echo ""
+    echo "[INFO] Checking the number of CPUs available for parallel processing"
+    if [ -z "${SLURM_CPUS_PER_TASK:-}" ]; then
+        if command -v nproc &> /dev/null; then
+            TOTAL_CPUS=$(nproc --all)
+            case $TOTAL_CPUS in
+                [1-15]) IGNORED_CPUS=1 ;;  # Reserve 1 CPU for <=15 cores
+                [16-31]) IGNORED_CPUS=2 ;; # Reserve 2 CPUs for <=31 cores
+                *) IGNORED_CPUS=4 ;;       # Reserve 4 CPUs for >=32 cores
+            esac
+            NUM_CPU=$((TOTAL_CPUS - IGNORED_CPUS))
+            echo "    - Running locally. Detected $TOTAL_CPUS CPUs, reserving $IGNORED_CPUS for system tasks. Using $NUM_CPU CPUs."
+        else
+            NUM_CPU=1  # Fallback
+            echo "    - Running locally. Unable to detect CPUs, defaulting to $NUM_CPU CPU."
+        fi
+    else
+        NUM_CPU=${SLURM_CPUS_PER_TASK}
+        echo "    - Running on SLURM. Number of CPUs allocated: ${NUM_CPU}"
+    fi
 }
 
 run_python_step() {
@@ -156,6 +160,80 @@ run_bash_step() {
     echo "Running ${step_name}..."
     /usr/bin/time -v "${script_path}" "$@" \
         2> "${LOG_DIR}/${step_name}.log"
+}
+
+activate_conda_env() {
+    echo ""
+    echo "[INFO] Attempting to load the specified Conda module"
+    CONDA_BASE=$(conda info --base)
+    if [ -z "$CONDA_BASE" ]; then
+        echo ""
+        echo "[ERROR] Conda base could not be determined. Is Conda installed and in your PATH?"
+        exit 1
+    fi
+
+    source "$CONDA_BASE/bin/activate"
+    if ! conda env list | grep -q "^$CONDA_ENV_NAME "; then
+        echo ""
+        echo "[ERROR] Conda environment '$CONDA_ENV_NAME' does not exist."
+        echo "   - Attempting to create $CONDA_ENV_NAME environment..."
+        conda create --name $CONDA_ENV_NAME python=3.11 -y
+        exit 1
+    fi
+
+    conda activate "$CONDA_ENV_NAME" || { echo "Error: Failed to activate Conda environment '$CONDA_ENV_NAME'."; exit 1; }
+    echo "   - Successfully activated Conda environment: $CONDA_ENV_NAME"
+    echo "   - Python executable: $(which python)"
+    echo ""
+}
+
+install_scenic_plus() {
+    echo "[INFO] Checking that scenicplus is installed"
+    local repo_dir="${SCRIPT_DIR}/scenicplus"
+
+    # only clone & install if it doesn’t already exist
+    if [[ ! -d "$repo_dir" ]]; then
+        echo "    - scenicplus directory not found, installing..."
+        # clone directly into the target directory
+        git clone https://github.com/Luminarada80/scenicplus_src.git "$repo_dir"
+
+        # install in editable mode so you can pick up future changes
+        pip install -e "$repo_dir"
+        echo "        Done!"
+    else
+        echo "    - scenicplus directory exists"
+    fi
+}
+
+install_pycistopic() {
+    echo "[INFO] Checking that pycisTopic is installed"
+    local repo_dir="${SCRIPT_DIR}/pycisTopic"
+
+    # only clone & install if it doesn’t already exist
+    if [[ ! -d "$repo_dir" ]]; then
+        echo "    - pycisTopic directory not found, installing..."
+        # clone directly into the target directory
+        git clone https://github.com/aertslab/pycisTopic.git "$repo_dir"
+        pip install -e "$repo_dir"
+        echo "        Done!"
+    else
+        echo "    - pycisTopic directory exists"
+    fi
+}
+
+add_pycistopic_to_path(){
+    # Add the local pycisTopic to the python path so it is recognized as a module
+    if [ -z "${PYTHONPATH+x}" ]; then
+        export PYTHONPATH="${SCRIPT_DIR}/pycisTopic/src"
+    else
+        export PYTHONPATH="${PYTHONPATH}:${SCRIPT_DIR}/pycisTopic/src"
+    fi
+
+    if [ -z "${LD_LIBRARY_PATH+x}" ]; then
+        export LD_LIBRARY_PATH="$HOME/miniconda3/lib"
+    else
+        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$HOME/miniconda3/lib"
+    fi
 }
 
 # Function to check if a directory exists, and create it if it doesn't
@@ -220,12 +298,166 @@ generate_config() {
     --output_config_path "${SCRIPT_DIR}/scplus_pipeline/Snakemake/config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
 }
 
+check_clusterbuster(){
+    echo "Checking to see if Cluster-Buster is in the PATH"
+    # Check if 'cbust' is in the PATH
+    if ! command -v cbust &> /dev/null; then
+        echo "    'cbust' not found in PATH. Setting it up..."
+
+        # Download the cbust if its not in the script path
+        if [ ! -f "${SCRIPT_DIR}/cbust" ]; then
+            echo "    cbust not downloaded, downloading..."
+            # Download cluster-buster (cbust)
+            wget https://resources.aertslab.org/cistarget/programs/cbust -O "${SCRIPT_DIR}/cbust"
+
+        else
+            echo "    cbust file found, adding to PATH"
+        fi
+
+        # Make it executable
+        chmod +x "${SCRIPT_DIR}/cbust"
+
+        # Add it to the PATH
+        export PATH="${SCRIPT_DIR}:$PATH"
+        echo "    'cbust' has been added to PATH."
+
+    else
+        echo "    'cbust' is already in PATH."
+    fi
+    echo ""
+}
+
+check_aertslab_motif_collection(){
+    echo "Checking if the Aertslab motif collection is downloaded"
+    # Check for the motif collection directory and file or download
+    MOTIF_DIR="${SCRIPT_DIR}/aertslab_motif_colleciton"
+    MOTIF_ZIP="${MOTIF_DIR}/v10nr_clust_public.zip"
+    MOTIF_URL="https://resources.aertslab.org/cistarget/motif_collections/v10nr_clust_public/v10nr_clust_public.zip"
+
+    # Check if the motif collection already exists
+    if [ ! -d "${MOTIF_DIR}/v10nr_clust_public" ]; then
+        echo "    Motif collection not found. Downloading and extracting it now..."
+
+        # Create the motif collection directory if it doesn't exist
+        mkdir -p "${MOTIF_DIR}"
+
+        # Download the motif collection zip file
+        wget -O "${MOTIF_ZIP}" "${MOTIF_URL}"
+
+        # Extract the zip file
+        unzip -q "${MOTIF_ZIP}" -d "${MOTIF_DIR}"
+
+        echo "    Motif collection downloaded and extracted to ${MOTIF_DIR}/v10nr_clust_public."
+    else
+        echo "    Motif collection exists at ${MOTIF_DIR}/v10nr_clust_public."
+    fi
+    echo ""
+}
+
+check_organism_genome_files(){
+    echo "Checking to see if the organism genome directory contains the correct files"
+    if [ ! -d "${ORGANISM_DIR}" ]; then
+        mkdir -p "$ORGANISM_DIR"
+    fi
+
+    if [ "$SPECIES" == "human" ]; then
+        if [ ! -f "${ORGANISM_DIR}/hg38.chrom.sizes" ]; then
+            echo "    - hg38.chrom.sizes does not exist, downloading..."
+            ORGANISM_CHROM_SIZE_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes"
+            curl -L -o "${ORGANISM_DIR}/hg38.chrom.sizes" "${ORGANISM_CHROM_SIZE_LINK}"
+            echo "        Done!"
+        fi
+        if [ ! -f "${ORGANISM_DIR}/hg38.fa" ]; then
+            echo "    - hg38.fa does not exist, downloading..."
+            ORGANISM_FASTA_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+            curl -L -o "${ORGANISM_DIR}/hg38.fa.gz" "${ORGANISM_FASTA_LINK}" | gunzip "${ORGANISM_DIR}/hg38.fa.gz"
+            echo "        Done!"
+        fi
+    fi
+
+    if [ "$SPECIES" == "mouse" ]; then
+        if [ ! -f "${ORGANISM_DIR}/mm10.chrom.sizes" ]; then
+            echo "    - mm10.chrom.sizes does not exist, downloading..."
+            ORGANISM_CHROM_SIZE_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes"
+            curl -L -o "${ORGANISM_DIR}/mm10.chrom.sizes" "${ORGANISM_CHROM_SIZE_LINK}"
+            echo "        Done!"
+        fi
+        if [ ! -f "${ORGANISM_DIR}/mm10.fa" ]; then
+            echo "    - mm10.fa does not exist, downloading..."
+            ORGANISM_FASTA_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.fa.gz"
+            curl -L -o "${ORGANISM_DIR}/mm10.fa.gz" "${ORGANISM_FASTA_LINK}" | gunzip "${ORGANISM_DIR}/mm10.fa.gz"
+            echo "        Done!"
+        fi
+    fi
+
+    # Download the precomputed cisTarget database to the organism genome file
+    if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ]; then
+
+        echo "Using pre-computed cisTarget database"
+
+        # Ensure destination directory exists
+        mkdir -p "$INPUT_DIR"
+
+        # File: rankings.feather
+        if [ -f "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" ]; then
+            echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.rankings.feather file exists"
+        else
+            echo "    Downloading rankings.feather file..."
+            if [ "$SPECIES" == "human" ]; then
+                RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+            
+            elif [ "$SPECIES" == "mouse" ]; then
+                RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather"
+
+            fi
+            curl -L -o "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" \
+                "${RANKINGS_FEATHER_LINK}"
+            if [ $? -eq 0 ]; then
+                echo "        Done!"
+            else
+                echo "        Error: Failed to download rankings.feather file."
+            fi
+        fi
+
+        # File: scores.feather
+        if [ -f "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" ]; then
+            echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.scores.feather file exists"
+        else
+            echo "    Downloading scores.feather file..."
+            if [ "$SPECIES" == "human" ]; then
+                SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
+            
+            elif [ "$SPECIES" == "mouse" ]; then
+                SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.scores.feather"
+            fi
+
+            curl -L -o "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" \
+                "${SCORES_FEATHER_LINK}"
+            if [ $? -eq 0 ]; then
+                echo "        Done!"
+            else
+                echo "        Error: Failed to download scores.feather file."
+            fi
+        fi
+
+        echo ""
+    fi
+}
 
 ###############################################################################
 # CHECK PATHS AND DEPENDENCIES
 ###############################################################################
 
+check_or_create_dir "$LOG_DIR"
+
+cd "${SCRIPT_DIR}"
+
 check_if_running
+determine_num_cpus
+activate_conda_env
+install_scenic_plus
+install_pycistopic
+add_pycistopic_to_path
 
 echo "Checking for all required directories and files"
 # Check required directories
@@ -235,14 +467,13 @@ check_dir_exists "$SCRIPT_DIR"
 # Check required files
 check_file_exists "$INPUT_DIR/$ATAC_FILE_NAME"
 check_file_exists "$INPUT_DIR/$RNA_FILE_NAME"
-check_file_exists "$BLACKLIST"
-check_file_exists "$GENOME_FASTA"
 
 # Check to see if SCENIC+ generated directories exist or create them
-check_or_create_dir "$LOG_DIR"
+
 check_or_create_dir "$OUTPUT_DIR"
 check_or_create_dir "$TEMP_DIR"
 check_or_create_dir "$QC_DIR"
+check_or_create_dir "${SCRIPT_DIR}/scplus_pipeline/Snakemake/config"
 
 # Generate the config file for the cell type and sample
 generate_config
@@ -250,116 +481,13 @@ generate_config
 echo "    All required files and directories found"
 echo ""
 
-echo "Checking to see if Cluster-Buster is in the PATH"
-# Check if 'cbust' is in the PATH
-if ! command -v cbust &> /dev/null; then
-    echo "    'cbust' not found in PATH. Setting it up..."
+check_clusterbuster
+check_aertslab_motif_collection
+check_organism_genome_files
 
-    # Download the cbust if its not in the script path
-    if [ ! -f "${SCRIPT_DIR}/cbust" ]; then
-        echo "    cbust not downloaded, downloading..."
-        # Download cluster-buster (cbust)
-        wget https://resources.aertslab.org/cistarget/programs/cbust -O cbust
+check_file_exists "$BLACKLIST"
+check_file_exists "$GENOME_FASTA"
 
-    else
-        echo "    cbust file found, adding to PATH"
-    fi
-
-    # Make it executable
-    chmod a+x cbust
-
-    # Add it to the PATH
-    export PATH=$(pwd):$PATH
-    echo "    'cbust' has been added to PATH."
-
-else
-    echo "    'cbust' is already in PATH."
-fi
-echo ""
-
-echo "Checking if the Aertslab motif collection is downloaded"
-# Check for the motif collection directory and file or download
-MOTIF_DIR="${SCRIPT_DIR}/aertslab_motif_colleciton"
-MOTIF_ZIP="${MOTIF_DIR}/v10nr_clust_public.zip"
-MOTIF_URL="https://resources.aertslab.org/cistarget/motif_collections/v10nr_clust_public/v10nr_clust_public.zip"
-
-# Check if the motif collection already exists
-if [ ! -d "${MOTIF_DIR}/v10nr_clust_public" ]; then
-    echo "    Motif collection not found. Downloading and extracting it now..."
-
-    # Create the motif collection directory if it doesn't exist
-    mkdir -p "${MOTIF_DIR}"
-
-    # Download the motif collection zip file
-    wget -O "${MOTIF_ZIP}" "${MOTIF_URL}"
-
-    # Extract the zip file
-    unzip -q "${MOTIF_ZIP}" -d "${MOTIF_DIR}"
-
-    echo "    Motif collection downloaded and extracted to ${MOTIF_DIR}/v10nr_clust_public."
-else
-    echo "    Motif collection exists at ${MOTIF_DIR}/v10nr_clust_public."
-fi
-echo ""
-
-# # Update the n_cpu value in the config.yaml file
-# CONFIG_FILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/config/config.yaml"
-# sed -i "s/^\(\s*n_cpu:\s*\).*/\1${NUM_CPU}/" "${CONFIG_FILE}"
-# echo "Updated config.yaml with n_cpu: ${NUM_CPU}"
-# echo ""
-
-# Download the precomputed cisTarget database
-if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ]; then
-
-    echo "Using pre-computed cisTarget database"
-
-    # Ensure destination directory exists
-    mkdir -p "$INPUT_DIR"
-
-    # File: rankings.feather
-    if [ -f "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" ]; then
-        echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.rankings.feather file exists"
-    else
-        echo "    Downloading rankings.feather file..."
-        if [ "$ORGANISM" == "human" ]; then
-            RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
-        
-        elif [ "$ORGANISM" == "mouse" ]; then
-            RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather"
-
-        fi
-        curl -L -o "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" \
-            "${RANKINGS_FEATHER_LINK}"
-        if [ $? -eq 0 ]; then
-            echo "        Done!"
-        else
-            echo "        Error: Failed to download rankings.feather file."
-        fi
-    fi
-
-    # File: scores.feather
-    if [ -f "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" ]; then
-        echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.scores.feather file exists"
-    else
-        echo "    Downloading scores.feather file..."
-        if [ "$ORGANISM" == "human" ]; then
-            SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
-        
-        elif [ "$ORGANISM" == "mouse" ]; then
-            SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.scores.feather"
-        fi
-
-        curl -L -o "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" \
-            "${SCORES_FEATHER_LINK}"
-        if [ $? -eq 0 ]; then
-            echo "        Done!"
-        else
-            echo "        Error: Failed to download scores.feather file."
-        fi
-    fi
-
-    echo ""
-fi
 
 echo "Checks complete, starting pipeline"
 
@@ -391,7 +519,7 @@ fi
 ###############################################################################
 if [ "$STEP_03_GET_TSS_DATA" = true ]; then
     echo "Step 3: Getting Transcription Start Site data"
-    pycistopic tss get_tss \
+    /usr/bin/time -v pycistopic tss get_tss \
         --output "${QC_DIR}/tss.bed" \
         --name "${PYCISTOPIC_SPECIES}" \
         --to-chrom-source ucsc \
@@ -438,51 +566,14 @@ fi
 if [ "$STEP_06_RUN_SNAKEMAKE_PIPELINE" = true ]; then
     echo "Step 6: Run SCENIC+ snakemake"
 
-        # Define the Snakefile and target config path
+    # Define the Snakefile and target config path
     SNAKEFILE="${SCRIPT_DIR}/scplus_pipeline/Snakemake/workflow/Snakefile"
     NEW_CONFIG_PATH="config/${CELL_TYPE}_${SAMPLE_NAME}_config.yaml"
-
-    # # Update the configfile line in the Snakefile
-    # sed -i "s|^\s*configfile:.*|configfile: \"${NEW_CONFIG_PATH}\"|" "${SNAKEFILE}"
-
-    # # Print confirmation
-    # echo "Updated Snakefile with configfile: ${NEW_CONFIG_PATH}"
-    # echo "    Variable value: '$(grep 'configfile' "${SNAKEFILE}")'"
-    # echo ""
-
-    # Check for Snakemake lock files
-    # LOCK_FILE="$SCRIPT_DIR/scplus_pipeline/Snakemake/.snakemake/locks"
-    # if [ -d "$LOCK_FILE" ]; then
-    #     echo "    Lock files detected at $LOCK_FILE"
-
-    #     # Use the SLURM job name for comparison
-    #     JOB_NAME="${SLURM_JOB_NAME}"  # Dynamically retrieve the job name from SLURM
-
-    #     # Check for running jobs with the same name, excluding the current job
-    #     RUNNING_COUNT=$(squeue --name="$JOB_NAME" --noheader | wc -l)
-
-    # If other SCENIC+ jobs are running and there are lock files, exit
-    if [ "$RUNNING_COUNT" -gt 1 ]; then
-        echo "    A job with the name '"$JOB_NAME"' is already running:"
-        echo "        Exiting to avoid conflicts."
-        exit 1
-    fi
-        
-    #     # If no other SCENIC+ jobs are running and there are lock files, remove them
-    #     else
-    #         echo "        No other jobs with the name '"$JOB_NAME"', removing locks"
-    #         cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
-    #         snakemake --unlock --snakefile $SNAKEFILE --configfile $NEW_CONFIG_PATH
-    #     fi
-        
-    # else
-    #     echo "    No lock files detected."
-    # fi
 
     echo "    Running snakemake"
 
     cd "${SCRIPT_DIR}/scplus_pipeline/Snakemake"
-    snakemake \
+    /usr/bin/time -v snakemake \
         --nolock \
         --cores ${NUM_CPU} \
         --snakefile $SNAKEFILE \
