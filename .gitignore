@@ -19,7 +19,6 @@ bedGraphToBigWig
 *.bedgraph
 pyflame/
 scplus_pipeline/Snakemake/.snakemake
-scplus_pipeline/Snakemake/workflow
 input/
 old_code/
 *.feather
