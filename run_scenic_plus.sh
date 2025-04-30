@@ -12,7 +12,7 @@ STEP_02_ATAC_PREPROCESSING=false
 STEP_03_GET_TSS_DATA=false
 STEP_04_CREATE_FASTA=false
 USE_PRECOMPUTED_CISTARGET_DB=false
-STEP_06_RUN_SNAKEMAKE_PIPELINE=true
+STEP_06_RUN_SNAKEMAKE_PIPELINE=false
 STEP_07_FORMAT_INFERRED_GRN=true
 
 CONDA_ENV_NAME="test_scenicplus"
@@ -420,78 +420,64 @@ check_aertslab_motif_collection() {
 }
 
 
-check_organism_genome_files() {
-    local logf="${LOG_DIR}/check_organism_genome_files.log"
-
-    # Make sure the log directory exists
-    mkdir -p "$(dirname "$logf")"
-
-    echo ""
-    echo "[INFO] Checking organism genome files in ${ORGANISM_DIR}"
-
-    # Ensure genome dir
-    if [[ ! -d "${ORGANISM_DIR}" ]]; then
-        echo "Organism directory for ${SPECIES} not found, creating..."
-        mkdir -p "${ORGANISM_DIR}"
+check_organism_genome_files(){
+    echo "[INFO] Checking to see if the organism genome directory contains the correct files"
+    if [ ! -d "${ORGANISM_DIR}" ]; then
+        mkdir -p "$ORGANISM_DIR"
     fi
 
-    # Human
-    if [[ "$SPECIES" == "human" ]]; then
-        echo "    [human branch]"
-        if [[ ! -f "${ORGANISM_DIR}/hg38.chrom.sizes" ]]; then
-            echo "      - downloading hg38.chrom.sizes"
-            curl -sS -L -o "${ORGANISM_DIR}/hg38.chrom.sizes" \
-                https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
-        else
-            echo "      - hg38.chrom.sizes already present"
+    if [ "$SPECIES" == "human" ]; then
+        if [ ! -f "${ORGANISM_DIR}/hg38.chrom.sizes" ]; then
+            echo "    - hg38.chrom.sizes does not exist, downloading..."
+            ORGANISM_CHROM_SIZE_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes"
+            curl -L -o "${ORGANISM_DIR}/hg38.chrom.sizes" "${ORGANISM_CHROM_SIZE_LINK}"
+            echo "        Done!"
         fi
-
-        if [[ ! -f "${ORGANISM_DIR}/hg38.fa" ]]; then
-            echo "      - downloading hg38.fa.gz and unzipping"
-            curl -sS -L https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz \
-                | gunzip > "${ORGANISM_DIR}/hg38.fa"
-        else
-            echo "      - hg38.fa already present"
+        if [ ! -f "${ORGANISM_DIR}/hg38.fa" ]; then
+            echo "    - hg38.fa does not exist, downloading..."
+            ORGANISM_FASTA_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+            curl -L -o "${ORGANISM_DIR}/hg38.fa.gz" "${ORGANISM_FASTA_LINK}" | gunzip "${ORGANISM_DIR}/hg38.fa.gz"
+            echo "        Done!"
         fi
     fi
 
-    # Mouse
-    if [[ "$SPECIES" == "mouse" ]]; then
-        echo "    [mouse branch]"
-        if [[ ! -f "${ORGANISM_DIR}/mm10.chrom.sizes" ]]; then
-            echo "      - downloading mm10.chrom.sizes"
-            curl -sS -L -o "${ORGANISM_DIR}/mm10.chrom.sizes" \
-                https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
-        else
-            echo "      - mm10.chrom.sizes already present"
+    if [ "$SPECIES" == "mouse" ]; then
+        if [ ! -f "${ORGANISM_DIR}/mm10.chrom.sizes" ]; then
+            echo "    - mm10.chrom.sizes does not exist, downloading..."
+            ORGANISM_CHROM_SIZE_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes"
+            curl -L -o "${ORGANISM_DIR}/mm10.chrom.sizes" "${ORGANISM_CHROM_SIZE_LINK}"
+            echo "        Done!"
         fi
-
-        if [[ ! -f "${ORGANISM_DIR}/mm10.fa" ]]; then
-            echo "      - downloading mm10.fa.gz and unzipping"
-            curl -sS -L https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.fa.gz \
-                | gunzip > "${ORGANISM_DIR}/mm10.fa"
-        else
-            echo "      - mm10.fa already present"
+        if [ ! -f "${ORGANISM_DIR}/mm10.fa" ]; then
+            echo "    - mm10.fa does not exist, downloading..."
+            ORGANISM_FASTA_LINK="https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.fa.gz"
+            curl -L -o "${ORGANISM_DIR}/mm10.fa.gz" "${ORGANISM_FASTA_LINK}" | gunzip "${ORGANISM_DIR}/mm10.fa.gz"
+            echo "        Done!"
         fi
     fi
 
-    # cisTarget DB
-    if [[ "$USE_PRECOMPUTED_CISTARGET_DB" == "true" ]]; then
-        echo "    [cisTarget DB branch]"
+    # Download the precomputed cisTarget database to the organism genome file
+    if [ "$USE_PRECOMPUTED_CISTARGET_DB" = true ]; then
+
+        echo "Using pre-computed cisTarget database"
+
+        # Ensure destination directory exists
         mkdir -p "$INPUT_DIR"
-        # rankings
+
+        # File: rankings.feather
         if [ -f "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" ]; then
-            echo "    - Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.rankings.feather file exists"
+            echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.rankings.feather file exists"
         else
-            echo "    - Downloading rankings.feather file..."
+            echo "    Downloading rankings.feather file..."
             if [ "$SPECIES" == "human" ]; then
                 RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.rankings.feather"
+            
             elif [ "$SPECIES" == "mouse" ]; then
                 RANKINGS_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/mus_musculus/mm10/screen/mc_v10_clust/region_based/mm10_screen_v10_clust.regions_vs_motifs.rankings.feather"
-            fi
 
+            fi
             curl -L -o "${ORGANISM_DIR}/${CISTARGET_RANKINGS_PRECOMP}" \
-                 "${RANKINGS_FEATHER_LINK}"
+                "${RANKINGS_FEATHER_LINK}"
             if [ $? -eq 0 ]; then
                 echo "        Done!"
             else
@@ -499,10 +485,11 @@ check_organism_genome_files() {
             fi
         fi
 
+        # File: scores.feather
         if [ -f "${ORGANISM_DIR}/${CISTARGET_SCORES_PRECOMP}" ]; then
-            echo "    - Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.scores.feather file exists"
+            echo "    Precomputed cisTarget ${PYCISTOPIC_SPECIES_CODE} regions_vs_motifs.scores.feather file exists"
         else
-            echo "    - Downloading scores.feather file..."
+            echo "    Downloading scores.feather file..."
             if [ "$SPECIES" == "human" ]; then
                 SCORES_FEATHER_LINK="https://resources.aertslab.org/cistarget/databases/homo_sapiens/hg38/screen/mc_v10_clust/region_based/hg38_screen_v10_clust.regions_vs_motifs.scores.feather"
             
@@ -518,14 +505,8 @@ check_organism_genome_files() {
                 echo "        Error: Failed to download scores.feather file."
             fi
         fi
-    fi
 
-    echo ""
-    if [[ $? -ne 0 ]]; then
-        echo "[ERROR] check_organism_genome_files failed; see $logf"
-        exit 1
-    else
-        echo "[INFO] check_organism_genome_files succeeded without errors"
+        echo ""
     fi
 }
 
@@ -561,6 +542,7 @@ check_file_exists "$INPUT_DIR/$RNA_FILE_NAME"
 check_or_create_dir "$OUTPUT_DIR"
 check_or_create_dir "$TEMP_DIR"
 check_or_create_dir "$QC_DIR"
+check_or_create_dir "${SCRIPT_DIR}/formatted_inferred_GRNs"
 check_or_create_dir "${SCRIPT_DIR}/scplus_pipeline/Snakemake/config"
 echo "    - Done!"
 

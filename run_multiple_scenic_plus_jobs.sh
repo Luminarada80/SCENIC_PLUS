@@ -1,6 +1,13 @@
 #!/bin/bash -l
+#SBATCH --job-name="submit_multiple_scenic_plus_jobs"
+#SBATCH -p compute
+#SBATCH --nodes=1
+#SBATCH -c 1
+#SBATCH --mem=2G
 
 SCRIPT_DIR="/gpfs/Labs/Uzun/SCRIPTS/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/TEST_SCENIC_PLUS"
+
+MAX_JOBS_IN_QUEUE=5
 
 submit_run_scenic_plus_job() {
     local SAMPLE_NAME=$1
@@ -72,7 +79,13 @@ run_macrophage() {
         )
     local SPECIES="human"
 
+    # Submit each SAMPLE_NAME as a separate job
     for SAMPLE_NAME in "${SAMPLE_NAMES[@]}"; do
+        # Check how many jobs are currently queued/running
+        while [ "$(squeue -u $USER | grep SCENIC+ | wc -l)" -ge "$MAX_JOBS_IN_QUEUE" ]; do
+            echo "[INFO] Maximum jobs ($MAX_JOBS_IN_QUEUE) in queue. Waiting 5 minutes to check again..."
+            sleep 300
+        done
 
         local INPUT_DIR=""
 
@@ -204,6 +217,11 @@ run_mESC(){
 
     # Submit each SAMPLE_NAME as a separate job
     for SAMPLE_NAME in "${SAMPLE_NAMES[@]}"; do
+        # Check how many jobs are currently queued/running
+        while [ "$(squeue -u $USER | grep SCENIC+ | wc -l)" -ge "$MAX_JOBS_IN_QUEUE" ]; do
+            echo "[INFO] Maximum jobs ($MAX_JOBS_IN_QUEUE) in queue. Waiting 5 minutes to check again..."
+            sleep 300
+        done
 
         local INPUT_DIR="/gpfs/Labs/Uzun/DATA/PROJECTS/2024.GRN_BENCHMARKING.MOELLER/LINGER/LINGER_MESC_SC_DATA/FULL_MESC_SAMPLES/${SAMPLE_NAME}"
 
@@ -239,10 +257,16 @@ run_K562(){
     )
     local SPECIES="human"
 
-    local INPUT_DIR=""
-
     # Submit each SAMPLE_NAME as a separate job
     for SAMPLE_NAME in "${SAMPLE_NAMES[@]}"; do
+        # Check how many jobs are currently queued/running
+        while [ "$(squeue -u $USER | grep SCENIC+ | wc -l)" -ge "$MAX_JOBS_IN_QUEUE" ]; do
+            echo "[INFO] Maximum jobs ($MAX_JOBS_IN_QUEUE) in queue. Waiting 5 minutes to check again..."
+            sleep 300
+        done
+
+        local INPUT_DIR=""
+
         local RNA_FILE_NAME="${SAMPLE_NAME}_RNA.csv"
         local ATAC_FILE_NAME="${SAMPLE_NAME}_ATAC.csv"
 
